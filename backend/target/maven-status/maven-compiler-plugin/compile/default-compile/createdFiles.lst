@@ -1,0 +1,13 @@
+com\hofgen\auth\payload\response\JwtResponse.class
+com\hofgen\auth\models\User.class
+com\hofgen\auth\payload\request\LoginRequest.class
+com\hofgen\auth\controllers\UserController.class
+com\hofgen\auth\payload\response\MessageResponse.class
+com\hofgen\auth\security\UserDetailsServiceImpl.class
+com\hofgen\auth\controllers\AuthController.class
+com\hofgen\auth\repository\UserRepository.class
+com\hofgen\auth\security\AuthTokenFilter.class
+com\hofgen\auth\security\WebSecurityConfig.class
+com\hofgen\auth\payload\request\SignupRequest.class
+com\hofgen\auth\BackendApplication.class
+com\hofgen\auth\security\JwtUtils.class
