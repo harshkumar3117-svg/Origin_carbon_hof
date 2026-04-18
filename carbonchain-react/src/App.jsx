@@ -11,7 +11,6 @@ import HomePage from './components/pages/HomePage';
 import CalculatorPage from './components/pages/CalculatorPage';
 import MarketplacePage from './components/pages/MarketplacePage';
 import DashboardPage from './components/pages/DashboardPage';
-import DashboardPage from './components/pages/DashboardPage';
 import AboutUsPage from './components/pages/AboutUsPage';
 import ContactUsPage from './components/pages/ContactUsPage';
 
