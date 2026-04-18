@@ -12,6 +12,8 @@ import CalculatorPage from './components/pages/CalculatorPage';
 import MarketplacePage from './components/pages/MarketplacePage';
 import DashboardPage from './components/pages/DashboardPage';
 import ProfileSelectionPage from './components/pages/ProfileSelectionPage';
+import AboutUsPage from './components/pages/AboutUsPage';
+import ContactUsPage from './components/pages/ContactUsPage';
 
 export default function App() {
   const { currentPage } = useAppState();
@@ -26,6 +28,8 @@ export default function App() {
       {currentPage === 'marketplace' && <MarketplacePage />}
       {currentPage === 'dashboard' && <DashboardPage />}
       {currentPage === 'profileSelection' && <ProfileSelectionPage />}
+      {currentPage === 'about' && <AboutUsPage />}
+      {currentPage === 'contact' && <ContactUsPage />}
 
       <BuyModal />
       <AuthModal />
