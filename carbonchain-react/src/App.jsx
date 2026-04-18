@@ -11,7 +11,7 @@ import HomePage from './components/pages/HomePage';
 import CalculatorPage from './components/pages/CalculatorPage';
 import MarketplacePage from './components/pages/MarketplacePage';
 import DashboardPage from './components/pages/DashboardPage';
-import ProfileSelectionPage from './components/pages/ProfileSelectionPage';
+import DashboardPage from './components/pages/DashboardPage';
 import AboutUsPage from './components/pages/AboutUsPage';
 import ContactUsPage from './components/pages/ContactUsPage';
 
@@ -27,7 +27,6 @@ export default function App() {
       {currentPage === 'calculator' && <CalculatorPage />}
       {currentPage === 'marketplace' && <MarketplacePage />}
       {currentPage === 'dashboard' && <DashboardPage />}
-      {currentPage === 'profileSelection' && <ProfileSelectionPage />}
       {currentPage === 'about' && <AboutUsPage />}
       {currentPage === 'contact' && <ContactUsPage />}
 

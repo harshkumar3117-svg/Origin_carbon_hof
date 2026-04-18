@@ -7,16 +7,9 @@ export default function AuthModal() {
   
   const [isOpen, setIsOpen] = useState(false);
   const [authMode, setAuthMode] = useState('login'); // 'login' or 'signup'
-  const [targetType, setTargetType] = useState('individual'); // 'individual' or 'company'
   const [isLoading, setIsLoading] = useState(false);
 
-  // Input states
-  const [indLoginEmail, setIndLoginEmail] = useState('');
-  const [indLoginPass, setIndLoginPass] = useState('');
-  const [indSignupName, setIndSignupName] = useState('');
-  const [indSignupEmail, setIndSignupEmail] = useState('');
-  const [indSignupPass, setIndSignupPass] = useState('');
-
+  // Input states - Company only
   const [comLoginEmail, setComLoginEmail] = useState('');
   const [comLoginPass, setComLoginPass] = useState('');
   const [comSignupName, setComSignupName] = useState('');
@@ -26,7 +19,6 @@ export default function AuthModal() {
 
   useEffect(() => {
     const handleOpen = (e) => {
-      setTargetType(e.detail.type);
       setAuthMode(e.detail.mode || 'login');
       setIsOpen(true);
     };
@@ -47,22 +39,21 @@ export default function AuthModal() {
     try {
       if (authMode === 'signup') {
         const payload = {
-          type: targetType,
-          email: targetType === 'individual' ? indSignupEmail : comSignupEmail,
-          password: targetType === 'individual' ? indSignupPass : comSignupPass,
-          name: indSignupName,
+          type: 'company',
+          email: comSignupEmail,
+          password: comSignupPass,
           companyName: comSignupName,
           empName: comSignupEmp
         };
 
-        if (!payload.email || !payload.password) {
+        if (!payload.email || !payload.password || !payload.companyName) {
           showAlert('❌ Please fill in all required fields', 'error');
           setIsLoading(false);
           return;
         }
 
         await axios.post(`${API_BASE_URL}/auth/signup`, payload);
-        showAlert('✅ Account created! Now logging you in...', 'success');
+        showAlert('✅ Company account created! Now logging you in...', 'success');
         
         // Auto-login after signup
         const loginRes = await axios.post(`${API_BASE_URL}/auth/login`, {
@@ -71,16 +62,13 @@ export default function AuthModal() {
         });
         finalizeLogin(loginRes.data);
       } else {
-        const email = targetType === 'individual' ? indLoginEmail : comLoginEmail;
-        const password = targetType === 'individual' ? indLoginPass : comLoginPass;
-
-        if (!email || !password) {
+        if (!comLoginEmail || !comLoginPass) {
           showAlert('❌ Please enter email and password', 'error');
           setIsLoading(false);
           return;
         }
 
-        const res = await axios.post(`${API_BASE_URL}/auth/login`, { email, password });
+        const res = await axios.post(`${API_BASE_URL}/auth/login`, { email: comLoginEmail, password: comLoginPass });
         finalizeLogin(res.data);
       }
     } catch (err) {
@@ -97,7 +85,7 @@ export default function AuthModal() {
     setAuthToken(token);
     setUser(data);
     setIsLoggedIn(true);
-    setUserType(userType);
+    setUserType('company');
     closeAuthModal();
     showAlert('✅ Logged in successfully as ' + name, 'success');
     navigateTo('calculator');
@@ -124,77 +112,35 @@ export default function AuthModal() {
           </div>
         </div>
         
-        <h2 className="text-[1.3rem] font-extrabold mb-5">
-          {authMode === 'login' ? 'Log In' : 'Sign Up'}
-        </h2>
-        
-        {/* Individual Form */}
-        {targetType === 'individual' && (
+        {authMode === 'login' ? (
           <div>
-            {authMode === 'login' ? (
-              <div>
-                <div className="form-group">
-                  <label className="form-label">Email Address</label>
-                  <input type="email" value={indLoginEmail} onChange={e=>setIndLoginEmail(e.target.value)} className="form-input" placeholder="john@example.com" autoFocus />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Password</label>
-                  <input type="password" value={indLoginPass} onChange={e=>setIndLoginPass(e.target.value)} className="form-input" placeholder="••••••••" />
-                </div>
-              </div>
-            ) : (
-              <div>
-                <div className="form-group">
-                  <label className="form-label">Full Name</label>
-                  <input type="text" value={indSignupName} onChange={e=>setIndSignupName(e.target.value)} className="form-input" placeholder="John Doe" autoFocus />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Email Address</label>
-                  <input type="email" value={indSignupEmail} onChange={e=>setIndSignupEmail(e.target.value)} className="form-input" placeholder="john@example.com" />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Password</label>
-                  <input type="password" value={indSignupPass} onChange={e=>setIndSignupPass(e.target.value)} className="form-input" placeholder="••••••••" />
-                </div>
-              </div>
-            )}
+            <div className="form-group">
+              <label className="form-label">Company Email</label>
+              <input type="email" value={comLoginEmail} onChange={e=>setComLoginEmail(e.target.value)} className="form-input" placeholder="admin@company.com" autoFocus />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Password</label>
+              <input type="password" value={comLoginPass} onChange={e=>setComLoginPass(e.target.value)} className="form-input" placeholder="••••••••" />
+            </div>
           </div>
-        )}
-
-        {/* Company Form */}
-        {targetType === 'company' && (
+        ) : (
           <div>
-            {authMode === 'login' ? (
-              <div>
-                <div className="form-group">
-                  <label className="form-label">Company Email</label>
-                  <input type="email" value={comLoginEmail} onChange={e=>setComLoginEmail(e.target.value)} className="form-input" placeholder="admin@company.com" autoFocus />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Password</label>
-                  <input type="password" value={comLoginPass} onChange={e=>setComLoginPass(e.target.value)} className="form-input" placeholder="••••••••" />
-                </div>
-              </div>
-            ) : (
-              <div>
-                <div className="form-group">
-                  <label className="form-label">Company Name</label>
-                  <input type="text" value={comSignupName} onChange={e=>setComSignupName(e.target.value)} className="form-input" placeholder="EcoTech Solutions" autoFocus />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Personal Company Email</label>
-                  <input type="email" value={comSignupEmail} onChange={e=>setComSignupEmail(e.target.value)} className="form-input" placeholder="employee@company.com" />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Employee Name</label>
-                  <input type="text" value={comSignupEmp} onChange={e=>setComSignupEmp(e.target.value)} className="form-input" placeholder="Jane Smith" />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Password</label>
-                  <input type="password" value={comSignupPass} onChange={e=>setComSignupPass(e.target.value)} className="form-input" placeholder="••••••••" />
-                </div>
-              </div>
-            )}
+            <div className="form-group">
+              <label className="form-label">Company Name</label>
+              <input type="text" value={comSignupName} onChange={e=>setComSignupName(e.target.value)} className="form-input" placeholder="EcoTech Solutions" autoFocus />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Business Email</label>
+              <input type="email" value={comSignupEmail} onChange={e=>setComSignupEmail(e.target.value)} className="form-input" placeholder="representative@company.com" />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Employee Name</label>
+              <input type="text" value={comSignupEmp} onChange={e=>setComSignupEmp(e.target.value)} className="form-input" placeholder="Jane Smith" />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Password</label>
+              <input type="password" value={comSignupPass} onChange={e=>setComSignupPass(e.target.value)} className="form-input" placeholder="••••••••" />
+            </div>
           </div>
         )}
 

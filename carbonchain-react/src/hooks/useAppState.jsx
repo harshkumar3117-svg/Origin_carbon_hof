@@ -21,7 +21,7 @@ export function AppProvider({ children }) {
   
   // Auth State
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userType, setUserType] = useState(null); // 'individual' or 'company'
+  const [userType, setUserType] = useState('company'); // Defaulting to company
   const [user, setUser] = useState(null);
   const [authModeIntent, setAuthModeIntent] = useState('login'); // track if they clicked sign in or log in
   const [authToken, setAuthToken] = useState(localStorage.getItem('token'));
@@ -47,7 +47,8 @@ export function AppProvider({ children }) {
     if(!isLoggedIn) {
       showAlert('⚠️ You must log in first to access this feature.', 'error');
       setAuthModeIntent('login');
-      navigateTo('profileSelection');
+      // Trigger Auth Modal directly for company
+      window.dispatchEvent(new CustomEvent('openAuthModal', { detail: { type: 'company', mode: 'login' } }));
       return;
     }
     navigateTo(pageId);
@@ -56,7 +57,7 @@ export function AppProvider({ children }) {
   // Logout Helper
   const logout = () => {
     setIsLoggedIn(false);
-    setUserType(null);
+    setUserType('company');
     setUser(null);
     setAuthToken(null);
     localStorage.removeItem('token');

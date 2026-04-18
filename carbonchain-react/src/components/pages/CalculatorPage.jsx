@@ -2,7 +2,6 @@ import React, { useRef, useState } from 'react';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
 import { useAppState } from '../../hooks/useAppState';
-import IndividualForm from '../calculator/IndividualForm';
 import CompanyForm from '../calculator/CompanyForm';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
@@ -26,8 +25,6 @@ export default function CalculatorPage() {
 
   const [recos, setRecos] = useState([]);
 
-  const isInd = userType === 'individual';
-
   const animateNumber = (from, to, duration, setter) => {
     const start = performance.now();
     const easeOut = t => 1 - Math.pow(1-t, 3);
@@ -44,7 +41,7 @@ export default function CalculatorPage() {
     setResult(null);
 
     const payload = formRef.current.getPayload();
-    const apiUrl = isInd ? 'http://localhost:5000/predict' : 'http://localhost:5001/predict';
+    const apiUrl = 'http://localhost:5001/predict';
 
     try {
       const response = await fetch(apiUrl, {
@@ -62,8 +59,8 @@ export default function CalculatorPage() {
       }
     } catch (err) {
       console.error('ML Server error:', err);
-      const port = isInd ? 5000 : 5001;
-      const folder = isInd ? 'individual_data' : 'company-data';
+      const port = 5001;
+      const folder = 'company-data';
       setResult({ error: true, port, folder });
       showAlert(`❌ ML server not reachable on port ${port}. Start ${folder}/server.py`, 'error');
     } finally {
@@ -77,8 +74,8 @@ export default function CalculatorPage() {
     const food = Math.round(mlTotal * 0.15);
     const other = mlTotal - energy - transport - food;
 
-    const threshold = isInd ? 11000 : 50000;
-    const maxTotal = isInd ? 20000 : 100000;
+    const threshold = 50000;
+    const maxTotal = 100000;
     const pct = Math.min((mlTotal / maxTotal) * 100, 100);
 
     let color, level, compare;
@@ -97,27 +94,27 @@ export default function CalculatorPage() {
     });
 
     const newRecos = [];
-    if (energy > (isInd ? 3000 : 15000)) {
+    if (energy > 15000) {
       newRecos.push({
         icon: '⚡',
-        title: isInd ? 'Switch to LED & Renewables' : 'Industrial Energy Audit',
-        text: isInd ? 'Reduce energy usage by 20% with smart bulbs.' : 'Optimize HVAC systems and switch to industrial solar panels.',
+        title: 'Industrial Energy Audit',
+        text: 'Optimize HVAC systems and switch to industrial solar panels.',
         impact: 'High Impact', saving: Math.round(energy * 0.25)
       });
     }
-    if (transport > (isInd ? 4000 : 20000)) {
+    if (transport > 20000) {
       newRecos.push({
         icon: '🚗',
-        title: isInd ? 'EVs & Carpooling' : 'Fleet Electrification',
-        text: isInd ? 'Using an EV or carpooling twice a week saves significant CO₂.' : 'Transition company vehicles to electric to cut fleet emissions by 60%.',
+        title: 'Fleet Electrification',
+        text: 'Transition company vehicles to electric to cut fleet emissions by 60%.',
         impact: 'Critical', saving: Math.round(transport * 0.40)
       });
     }
-    if (food > (isInd ? 1500 : 5000)) {
+    if (food > 5000) {
       newRecos.push({
         icon: '🥗',
-        title: isInd ? 'Plant-Based Days' : 'Sustainable Catering',
-        text: isInd ? 'Reducing red meat can lower food footprint by 40%.' : 'Offer more vegetarian options in the company canteen.',
+        title: 'Sustainable Catering',
+        text: 'Offer more vegetarian options in the company canteen.',
         impact: 'Medium Impact', saving: Math.round(food * 0.35)
       });
     }
@@ -150,18 +147,18 @@ export default function CalculatorPage() {
       <div className="max-w-[1100px] mx-auto px-5">
         <div className="pt-[30px] pb-5">
           <div className="text-[1.8rem] font-extrabold mb-1.5">
-            {isInd ? '👤 Individual Carbon Calculator' : '🏢 Company Carbon Calculator'}
+            🏢 Company Carbon Calculator
           </div>
           <div className="text-[0.9rem] text-cc-muted2">
-            {isInd ? 'ML Model tailored for personal lifestyle and habits' : 'Professional ML tool for business emission tracking'}
+            Professional ML tool for business emission tracking
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
           <div>
-            {isInd ? <IndividualForm ref={formRef} /> : <CompanyForm ref={formRef} />}
+            <CompanyForm ref={formRef} />
             <button className="calc-btn mb-10" onClick={calculateCarbon}>
-              <i className="fas fa-magic"></i> Calculate {isInd ? 'Individual' : 'Company'} Footprint
+              <i className="fas fa-magic"></i> Calculate Company Footprint
             </button>
           </div>
 
@@ -212,7 +209,7 @@ export default function CalculatorPage() {
                   <div className="flex justify-between text-[0.78rem] text-cc-muted2 mb-1">
                     <span>0 kg</span>
                     <span style={{ color: result.color }}>Level: {result.level}</span>
-                    <span>{isInd ? '30,000 kg' : '100,000 kg'}</span>
+                    <span>100,000 kg</span>
                   </div>
                   <div className="h-3 rounded-full bg-cc-border overflow-hidden my-2.5">
                     <div className="h-full rounded-full transition-[width] duration-1000 ease-out" style={{ width: `${result.pct}%`, background: result.color }}></div>

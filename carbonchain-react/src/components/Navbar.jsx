@@ -9,9 +9,9 @@ export default function Navbar() {
     setAuthModeIntent
   } = useAppState();
 
-  const openAuthChoice = (intent) => {
-    setAuthModeIntent(intent);
-    navigateTo('profileSelection');
+  const openAuthChoice = (mode) => {
+    setAuthModeIntent(mode);
+    window.dispatchEvent(new CustomEvent('openAuthModal', { detail: { mode } }));
   };
 
   return (
@@ -79,7 +79,7 @@ export default function Navbar() {
         <div id="authSection">
           {isLoggedIn ? (
             <div className="flex items-center gap-2 bg-cc-card2 border border-cc-border py-1 px-3 rounded-full text-[0.8rem]">
-              <i className={`fas fa-${userType === 'individual' ? 'user' : 'building'}`}></i>
+              <i className="fas fa-building"></i>
               <span>{user?.name?.split(' ')[0] || user?.companyName?.split(' ')[0]}</span>
               <i className="fas fa-sign-out-alt text-cc-red cursor-pointer text-[0.8rem] ml-2" onClick={logout} title="Logout"></i>
             </div>
