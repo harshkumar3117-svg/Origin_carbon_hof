@@ -1,5 +1,7 @@
 package com.hofgen.auth.controllers;
 
+import com.hofgen.auth.models.Company;
+import com.hofgen.auth.models.Individual;
 import com.hofgen.auth.models.User;
 import com.hofgen.auth.payload.request.LoginRequest;
 import com.hofgen.auth.payload.request.SignupRequest;
@@ -16,6 +18,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -34,7 +37,7 @@ public class AuthController {
   JwtUtils jwtUtils;
 
   @PostMapping("/login")
-  public ResponseEntity<?> authenticateUser(@RequestBody LoginRequest loginRequest) {
+  public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
     try {
       Authentication authentication = authenticationManager.authenticate(
           new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
@@ -56,7 +59,7 @@ public class AuthController {
   }
 
   @PostMapping("/signup")
-  public ResponseEntity<?> registerUser(@RequestBody SignupRequest signUpRequest) {
+  public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signUpRequest) {
     if (userRepository.existsByEmail(signUpRequest.getEmail())) {
       return ResponseEntity
           .badRequest()
@@ -64,18 +67,21 @@ public class AuthController {
     }
 
     // Create new user's account
-    User user = new User();
+    User user;
+    if ("individual".equals(signUpRequest.getType())) {
+        Individual individual = new Individual();
+        individual.setName(signUpRequest.getName());
+        user = individual;
+    } else {
+        Company company = new Company();
+        company.setCompanyName(signUpRequest.getCompanyName());
+        company.setEmpName(signUpRequest.getEmpName());
+        user = company;
+    }
+
     user.setEmail(signUpRequest.getEmail());
     user.setPassword(encoder.encode(signUpRequest.getPassword()));
     user.setType(signUpRequest.getType());
-    
-    if ("individual".equals(signUpRequest.getType())) {
-        user.setName(signUpRequest.getName());
-    } else {
-        user.setCompanyName(signUpRequest.getCompanyName());
-        user.setEmpName(signUpRequest.getEmpName());
-        user.setName(signUpRequest.getCompanyName()); // Generic name
-    }
 
     userRepository.save(user);
 

@@ -4,12 +4,12 @@ import jakarta.persistence.*;
 
 @Entity
 @Table(name = "users")
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name = "user_type")
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    private String name;
 
     @Column(unique = true)
     private String email;
@@ -17,22 +17,15 @@ public class User {
     private String password;
 
     private String type; // 'individual' or 'company'
-    
-    // For companies
-    private String companyName;
-    private String empName;
 
     public User() {
     }
 
-    public User(Long id, String name, String email, String password, String type, String companyName, String empName) {
+    public User(Long id, String email, String password, String type) {
         this.id = id;
-        this.name = name;
         this.email = email;
         this.password = password;
         this.type = type;
-        this.companyName = companyName;
-        this.empName = empName;
     }
 
     public Long getId() {
@@ -41,14 +34,6 @@ public class User {
 
     public void setId(Long id) {
         this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public String getEmail() {
@@ -75,19 +60,7 @@ public class User {
         this.type = type;
     }
 
-    public String getCompanyName() {
-        return companyName;
-    }
-
-    public void setCompanyName(String companyName) {
-        this.companyName = companyName;
-    }
-
-    public String getEmpName() {
-        return empName;
-    }
-
-    public void setEmpName(String empName) {
-        this.empName = empName;
+    public String getName() {
+        return null;
     }
 }

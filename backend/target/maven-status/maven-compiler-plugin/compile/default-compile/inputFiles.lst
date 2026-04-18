@@ -1,3 +1,4 @@
+D:\hofgen\webapp\backend\src\main\java\com\hofgen\auth\models\Company.java
 D:\hofgen\webapp\backend\src\main\java\com\hofgen\auth\payload\response\MessageResponse.java
 D:\hofgen\webapp\backend\src\main\java\com\hofgen\auth\controllers\UserController.java
 D:\hofgen\webapp\backend\src\main\java\com\hofgen\auth\security\AuthTokenFilter.java
@@ -7,6 +8,8 @@ D:\hofgen\webapp\backend\src\main\java\com\hofgen\auth\payload\response\JwtRespo
 D:\hofgen\webapp\backend\src\main\java\com\hofgen\auth\security\JwtUtils.java
 D:\hofgen\webapp\backend\src\main\java\com\hofgen\auth\payload\request\SignupRequest.java
 D:\hofgen\webapp\backend\src\main\java\com\hofgen\auth\controllers\AuthController.java
+D:\hofgen\webapp\backend\src\main\java\com\hofgen\auth\models\Individual.java
+D:\hofgen\webapp\backend\src\main\java\com\hofgen\auth\security\GlobalExceptionHandler.java
 D:\hofgen\webapp\backend\src\main\java\com\hofgen\auth\repository\UserRepository.java
 D:\hofgen\webapp\backend\src\main\java\com\hofgen\auth\security\WebSecurityConfig.java
 D:\hofgen\webapp\backend\src\main\java\com\hofgen\auth\BackendApplication.java
