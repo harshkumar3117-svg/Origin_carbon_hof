@@ -66,25 +66,15 @@ public class AuthController {
           .body(new MessageResponse("Error: Email is already in use!"));
     }
 
-    // Create new user's account
-    User user;
-    if ("individual".equals(signUpRequest.getType())) {
-        Individual individual = new Individual();
-        individual.setName(signUpRequest.getName());
-        user = individual;
-    } else {
-        Company company = new Company();
-        company.setCompanyName(signUpRequest.getCompanyName());
-        company.setEmpName(signUpRequest.getEmpName());
-        user = company;
-    }
+    // Create new company account
+    Company company = new Company();
+    company.setCompanyName(signUpRequest.getCompanyName());
+    company.setEmpName(signUpRequest.getEmpName());
+    
+    company.setEmail(signUpRequest.getEmail());
+    company.setPassword(encoder.encode(signUpRequest.getPassword()));
+    company.setType("company");
 
-    user.setEmail(signUpRequest.getEmail());
-    user.setPassword(encoder.encode(signUpRequest.getPassword()));
-    user.setType(signUpRequest.getType());
-
-    userRepository.save(user);
-
-    return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
+    return ResponseEntity.ok(new MessageResponse("Company registered successfully!"));
   }
 }

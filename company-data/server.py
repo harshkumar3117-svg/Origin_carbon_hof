@@ -19,7 +19,6 @@ def predict():
             return jsonify({'error': 'No data provided'}), 400
 
         # Extract features
-        # Mapping Diet_Type to OHE columns
         diet_type = data.get('Diet_Type', 'Both')
         ohe_diets = {
             'Diet_Type_MostlyNonVeg': 1 if diet_type == 'MostlyNonVeg' else 0,
@@ -40,31 +39,25 @@ def predict():
             **ohe_diets
         }
 
-        # Convert to DataFrame
-        # Ensure column order matches model expectations:
-        # ['Personal_Vehicle_Km', 'Public_Vehicle_Km', 'Plane_Journey_Count', 'Train_Journey_Count', 
-        #  'Electricity_Kwh', 'Water_Usage_Liters', 'Waste_Kg', 'Diet_Type_MostlyNonVeg', 
-        #  'Diet_Type_MostlyVeg', 'Diet_Type_NonVeg', 'Diet_Type_Veg']
+        # Convert to DataFrame for prediction
         features_order = [
             'Personal_Vehicle_Km', 'Public_Vehicle_Km', 'Plane_Journey_Count', 
             'Train_Journey_Count', 'Electricity_Kwh', 'Water_Usage_Liters', 
             'Waste_Kg', 'Diet_Type_MostlyNonVeg', 'Diet_Type_MostlyVeg', 
             'Diet_Type_NonVeg', 'Diet_Type_Veg'
         ]
-        
         input_df = pd.DataFrame([input_data])[features_order]
 
         # Predict
         prediction = model.predict(input_df)[0]
+        prediction = round(float(prediction), 2)
 
         return jsonify({
-            'carbon_emission': float(prediction),
+            'carbon_emission': prediction,
             'status': 'success'
         })
-
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    # Running on 5001 to avoid conflict with individual model
     app.run(debug=True, port=5001)
