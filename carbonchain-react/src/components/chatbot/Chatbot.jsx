@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
+import axios from 'axios';
 import { useAppState } from '../../hooks/useAppState';
-import { botAnswer } from '../../constants/chatbot';
+import { KB } from '../../constants/chatbot';
+import { PROJECTS } from '../../constants/projects';
 
 export default function Chatbot() {
   const { chatOpen, setChatOpen } = useAppState();
@@ -36,7 +38,54 @@ export default function Chatbot() {
     if (!chatOpen) setShowBadge(false);
   };
 
-  const handleSend = () => {
+  const queryGroqAI = async (message) => {
+    try {
+      const kbData = KB.map(k => k.answer.replace(/<[^>]*>?/gm, '')).join(' | ');
+      const projectData = PROJECTS.map(p => `${p.name} (${p.co2}): ${p.priceEth} ETH`).join(', ');
+
+      const response = await axios.post(
+        'https://api.groq.com/openai/v1/chat/completions',
+        {
+          model: 'llama-3.3-70b-versatile',
+          messages: [
+            {
+              role: 'system',
+              content: `You are CarbonBot, an AI assistant for the Origin Carbon Tracking and Marketplace platform. 
+              Always use the following training data to answer questions accurately:
+              
+              SITE RULES & KNOWLEDGE: ${kbData}
+              
+              AVAILABLE PROJECTS AND PRICING: ${projectData}
+              
+              INSTRUCTIONS:
+              - Use this data to answer questions directly. Do not make up prices or rules.
+              - Be concise, professional, and friendly with emojis.
+              - You must format text with basic HTML like <b>bold</b> and <br> for line breaks. Never use markdown (\`\`\`). Keep responses short.`
+            },
+            {
+              role: 'user',
+              content: message
+            }
+          ],
+          temperature: 0.3, // Lower temp for more factual adherence
+          max_tokens: 300,
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${import.meta.env.VITE_GROQ_API_KEY}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
+      return response.data.choices[0].message.content.replace(/\n/g, '<br>');
+    } catch (error) {
+      console.error('Groq API Error:', error);
+      return 'I am currently having trouble connecting to my AI brain. Please try again later or ask me a simpler question!';
+    }
+  };
+
+  const handleSend = async () => {
     if (!inputVal.trim()) return;
     const userText = inputVal.trim();
     setInputVal('');
@@ -44,32 +93,28 @@ export default function Chatbot() {
     setMessages(prev => [...prev, { sender: 'user', text: userText }]);
     setIsTyping(true);
     
-    setTimeout(() => {
-      setIsTyping(false);
-      setMessages(prev => [...prev, { sender: 'bot', text: botAnswer(userText) }]);
-    }, 650 + Math.random() * 400);
+    // Call the powerful LLM!
+    const aiResponse = await queryGroqAI(userText);
+    
+    setIsTyping(false);
+    setMessages(prev => [...prev, { sender: 'bot', text: aiResponse }]);
   };
 
-  const handleQuickAsk = (q) => {
+  const handleQuickAsk = async (q) => {
     if (!chatOpen) {
       setChatOpen(true);
       setShowBadge(false);
-      setTimeout(() => {
-        setMessages(prev => [...prev, { sender: 'user', text: q }]);
-        setIsTyping(true);
-        setTimeout(() => {
-          setIsTyping(false);
-          setMessages(prev => [...prev, { sender: 'bot', text: botAnswer(q) }]);
-        }, 800);
-      }, 500);
-    } else {
+    }
+    
+    setTimeout(async () => {
       setMessages(prev => [...prev, { sender: 'user', text: q }]);
       setIsTyping(true);
-      setTimeout(() => {
-        setIsTyping(false);
-        setMessages(prev => [...prev, { sender: 'bot', text: botAnswer(q) }]);
-      }, 800);
-    }
+      
+      const aiResponse = await queryGroqAI(q);
+      
+      setIsTyping(false);
+      setMessages(prev => [...prev, { sender: 'bot', text: aiResponse }]);
+    }, 500);
   };
 
   return (
