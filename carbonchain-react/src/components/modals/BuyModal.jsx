@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAppState } from '../../hooks/useAppState';
 import { PROJECTS } from '../../constants/projects';
 import { CONTRACT_ADDRESS, CONTRACT_ABI } from '../../constants/contract';
-import { ethers } from 'ethers';
+import { ethers, parseEther, Contract } from 'ethers';
 
 export default function BuyModal() {
   const { account, signer, showAlert, connectWallet, co2Balance, setCo2Balance, transactions, setTransactions, allowableOffset, offsettingBlocked, setPurchaseCompleted } = useAppState();
@@ -61,12 +61,12 @@ export default function BuyModal() {
     
     try {
       const totalEth = project.priceEth * qty;
-      const ethAmount = ethers.parseEther(totalEth.toFixed(6));
+      const ethAmount = parseEther(totalEth.toFixed(6));
 
       let tHash;
 
       try {
-        const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+        const contract = new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
         // Explicit gasLimit bypasses ethers.js gas estimation and forces the MetaMask popup
         // Send a direct transaction to trigger Metamask robustly
         const tx = await contract.buyCredits(currentAccount, qty, { value: ethAmount, gasLimit: 300000 });

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { ethers } from 'ethers';
+import { ethers, BrowserProvider, formatEther, formatUnits, Contract } from 'ethers';
 import axios from 'axios';
 import { CONTRACT_ADDRESS, CONTRACT_ABI } from '../constants/contract';
 
@@ -109,8 +109,8 @@ export function AppProvider({ children }) {
       showAlert('🦊 Connecting to MetaMask...', 'info');
       const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
       
-      // Ethers v6 syntax: BrowsersProvider instead of providers.Web3Provider
-      const web3Provider = new ethers.BrowserProvider(window.ethereum);
+      // Ethers v6 syntax: BrowserProvider instead of providers.Web3Provider
+      const web3Provider = new BrowserProvider(window.ethereum);
       const web3Signer = await web3Provider.getSigner();
       
       setProvider(web3Provider);
@@ -142,16 +142,16 @@ export function AppProvider({ children }) {
       if(account && provider) {
         try {
           const bal = await provider.getBalance(account);
-          setEthBalance(ethers.formatEther(bal));
+          setEthBalance(formatEther(bal));
         } catch(e) {
           console.warn("Could not fetch ETH balance", e);
         }
 
         try {
-          const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+          const contract = new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
           const bal = await contract.balanceOf(account);
           // Ethers v6 uses native BigInt, .gt() replaced by > 
-          const balNumber = Number(ethers.formatUnits(bal, bal > 1000000n ? 18 : 0));
+          const balNumber = Number(formatUnits(bal, bal > 1000000n ? 18 : 0));
           setCo2Balance(Math.floor(balNumber));
         } catch(e) {
           console.warn("Could not fetch CO2 balance from contract", e.message);
@@ -159,14 +159,14 @@ export function AppProvider({ children }) {
         }
         
         try {
-          const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+          const contract = new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
           const filter = contract.filters.CreditsPurchased(account);
           const events = await contract.queryFilter(filter);
           let txs = [];
           if (events && events.length > 0) {
             txs = events.map(e => {
               let c = e.args.amount ? Number(e.args.amount) : 0;
-              let eth = e.args.ethPaid ? ethers.formatEther(e.args.ethPaid) : "0";
+              let eth = e.args.ethPaid ? formatEther(e.args.ethPaid) : "0";
               return {
                 id: e.blockNumber,
                 date: "Web3",

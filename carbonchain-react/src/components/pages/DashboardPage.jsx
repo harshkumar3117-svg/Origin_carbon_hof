@@ -8,7 +8,7 @@ import { useAppState } from '../../hooks/useAppState';
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip);
 
 export default function DashboardPage() {
-  const { account, ethBalance, co2Balance, transactions, connectWallet, shortAddr, showAlert, userType, user, navigateTo } = useAppState();
+  const { account, ethBalance, co2Balance, setCo2Balance, transactions, connectWallet, shortAddr, showAlert, userType, user, navigateTo } = useAppState();
 
   // Audit photo upload state
   const fileInputRef = useRef(null);
@@ -28,7 +28,48 @@ export default function DashboardPage() {
     fileInputRef.current?.click();
   };
 
-  const handlePhotoUpload = (e) => {
+  const compressImage = (file) => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          // Target resolution 800px max
+          const MAX_WIDTH = 800;
+          const MAX_HEIGHT = 800;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // Compress to 0.7 quality
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+          resolve(dataUrl);
+        };
+      };
+    });
+  };
+
+  const handlePhotoUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -38,68 +79,80 @@ export default function DashboardPage() {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = async (ev) => {
-      const base64Image = ev.target.result;
-      setAuditPhoto(base64Image);
-      setAuditLoading(true);
-      setAuditResult(null);
+    setAuditLoading(true);
+    setAuditResult(null);
 
-      try {
-        const response = await axios.post(
-          'https://api.groq.com/openai/v1/chat/completions',
-          {
-            model: 'llama-3.2-11b-vision-preview',
-            messages: [
-              {
-                role: 'user',
-                content: [
-                  {
-                    type: 'text',
-                    text: `Analyze this image. If it shows an eco-friendly or environmental activity (cycling, walking, recycling, composting, solar panels, wind turbines, plant-based food, or nature/planting), respond exactly with one of these names: [Eco-Commuter, Green Kitchen, Waste Reducer, Solar Observer, Nature Guardian]. If the photo does not clearly show an eco-friendly activity or is unrelated to the environment, respond exactly with 'INVALID'.`
-                  },
-                  {
-                    type: 'image_url',
-                    image_url: {
-                      url: base64Image
-                    }
-                  }
-                ]
-              }
-            ],
-            temperature: 0.1,
-            max_tokens: 10
-          },
-          {
-            headers: {
-              'Authorization': `Bearer ${import.meta.env.VITE_GROQ_API_KEY}`,
-              'Content-Type': 'application/json'
-            }
-          }
-        );
-
-        const aiResult = response.data.choices[0].message.content.trim();
-        
-        if (aiResult.includes('INVALID')) {
-          setAuditResult({ error: true, text: 'This photo doesn\'t seem to show an eco-friendly activity. Please try uploading a different photo related to sustainability!' });
-          showAlert('⚠️ Sustainability audit failed', 'warning');
-        } else {
-          // Find the category in our list
-          const matched = AUDIT_ACHIEVEMENTS.find(a => aiResult.toLowerCase().includes(a.name.toLowerCase())) || AUDIT_ACHIEVEMENTS[4];
-          setAuditResult(matched);
-          showAlert(`🏅 Achievement Unlocked: ${matched.badge}!`, 'success');
-        }
-      } catch (err) {
-        console.error('Audit Error:', err);
-        showAlert('❌ AI Analysis failed. Please try again.', 'error');
-        setAuditResult({ error: true, text: 'Something went wrong with the AI analysis. Please check your connection and try again.' });
-      } finally {
-        setAuditLoading(false);
+    try {
+      // 🚀 Pre-flight: Check for API key
+      if (!import.meta.env.VITE_GROQ_API_KEY || import.meta.env.VITE_GROQ_API_KEY === 'undefined') {
+        throw new Error("Missing Groq API Key. Please add it to your .env file and RESTART your dev server.");
       }
-    };
-    reader.readAsDataURL(file);
-    // Reset input so same file can be selected again
-    e.target.value = '';
+
+      // 🚀 Compress image first
+      const readyImage = await compressImage(file);
+      setAuditPhoto(readyImage);
+
+      const response = await axios.post(
+        'https://api.groq.com/openai/v1/chat/completions',
+        {
+          model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+          messages: [
+            {
+              role: 'user',
+              content: [
+                {
+                  type: 'text',
+                  text: `Analyze this image. If it shows an eco-friendly or environmental activity (cycling, walking, recycling, composting, solar panels, wind turbines, plant-based food, or nature/planting), respond exactly with one of these names: [Eco-Commuter, Green Kitchen, Waste Reducer, Solar Observer, Nature Guardian]. If the photo does not clearly show an eco-friendly activity or is unrelated to the environment, respond exactly with 'INVALID'.`
+                },
+                {
+                  type: 'image_url',
+                  image_url: {
+                    url: readyImage
+                  }
+                }
+              ]
+            }
+          ],
+          temperature: 0.1,
+          max_tokens: 10
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${import.meta.env.VITE_GROQ_API_KEY}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      const aiResult = response.data.choices[0].message.content.trim();
+      
+      if (aiResult.includes('INVALID')) {
+        setAuditResult({ error: true, text: 'This photo doesn\'t seem to show an eco-friendly activity. Please try uploading a different photo related to sustainability!' });
+        showAlert('⚠️ Sustainability audit failed', 'warning');
+      } else {
+        // Find the category in our list
+        const matched = AUDIT_ACHIEVEMENTS.find(a => aiResult.toLowerCase().includes(a.name.toLowerCase())) || AUDIT_ACHIEVEMENTS[4];
+        setAuditResult(matched);
+        showAlert(`🏅 Achievement Unlocked: ${matched.badge}!`, 'success');
+      }
+    } catch (err) {
+      console.error('Audit Error:', err);
+      const detail = err.response?.data?.error?.message || err.message || 'Check your connection and try again.';
+      setAuditResult({ error: true, text: `Analysis failed: ${detail}` });
+      showAlert('❌ AI Analysis failed. Please try again.', 'error');
+    } finally {
+      setAuditLoading(false);
+      // Reset input so same file can be selected again
+      e.target.value = '';
+    }
+  };
+
+  const handleClaimBadge = () => {
+    // Reward user with 5 CCT for eco-activity
+    const reward = 5;
+    setCo2Balance(prev => prev + reward);
+    showAlert(`🎉 Reward Claimed! +${reward} CCT added to your balance.`, 'success');
+    closeAuditModal();
   };
 
   const closeAuditModal = () => {
@@ -437,7 +490,7 @@ export default function DashboardPage() {
                                 <div className="text-[0.85rem] text-cc-muted2 leading-[1.6]">{auditResult.desc}</div>
                               </div>
                               <div className="flex gap-3">
-                                <button className="flex-1 py-2.5 rounded-xl bg-cc-green text-black font-bold text-[0.85rem] border-none cursor-pointer transition-all hover:bg-cc-emerald" onClick={closeAuditModal}>
+                                <button className="flex-1 py-2.5 rounded-xl bg-cc-green text-black font-bold text-[0.85rem] border-none cursor-pointer transition-all hover:bg-cc-emerald" onClick={handleClaimBadge}>
                                   🎉 Claim Badge
                                 </button>
                                 <button className="flex-1 py-2.5 rounded-xl bg-cc-card2 border border-cc-border text-cc-muted2 font-bold text-[0.85rem] cursor-pointer transition-all hover:text-white hover:border-cc-green" onClick={() => { closeAuditModal(); handleAuditClick(); }}>
