@@ -8,7 +8,7 @@ const CompanyForm = forwardRef((props, ref) => {
     train: '5',
     elec: '12000',
     water: '50000',
-    waste: '200',
+    waste: '2500',
     diet: 'Both'
   });
 
@@ -64,7 +64,7 @@ const CompanyForm = forwardRef((props, ref) => {
           <input type="number" name="water" className="form-input" value={formData.water} onChange={handleChange} />
         </div>
         <div className="form-group">
-          <label className="form-label">Monthly Waste Production (Kg)</label>
+          <label className="form-label">Annual Waste Production (Kg)</label>
           <input type="number" name="waste" className="form-input" value={formData.waste} onChange={handleChange} />
         </div>
         <div className="form-group">

@@ -7,7 +7,7 @@ import CompanyForm from '../calculator/CompanyForm';
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 export default function CalculatorPage() {
-  const { userType, navigateTo, showAlert } = useAppState();
+  const { userType, navigateTo, showAlert, user, setAllowableOffset, setOffsettingBlocked, setPurchaseCompleted } = useAppState();
   const formRef = useRef();
 
   const [loading, setLoading] = useState(false);
@@ -74,14 +74,32 @@ export default function CalculatorPage() {
     const food = Math.round(mlTotal * 0.15);
     const other = mlTotal - energy - transport - food;
 
-    const threshold = 50000;
-    const maxTotal = 100000;
+    // Fixed Limit explicitly defined beforehand
+    const govtLimit = user?.govtLimit || 50;
+    
+    const maxTotal = govtLimit * 1.5;
     const pct = Math.min((mlTotal / maxTotal) * 100, 100);
 
+    const excess = mlTotal - govtLimit;
+    const blockThreshold = govtLimit * 1.1; // Strict +10% 
+
+    let isBlocked = false;
+    let allowedCredits = mlTotal; // Up to their total footprint
+
+    if (mlTotal > blockThreshold) {
+       isBlocked = true;
+       allowedCredits = 0; // Strict blocking
+    }
+    
+    // Globally enforce logic 
+    setOffsettingBlocked(isBlocked);
+    setAllowableOffset(allowedCredits);
+    setPurchaseCompleted(false);
+
     let color, level, compare;
-    if (mlTotal < threshold * 0.4) { color = '#22c55e'; level = 'Excellent (Net Zero Path)'; compare = 'Well below average'; }
-    else if (mlTotal < threshold) { color = '#eab308'; level = 'Average Footprint'; compare = 'On par with peers'; }
-    else { color = '#ef4444'; level = 'High Emission'; compare = 'Action recommended to reduce footprint'; }
+    if (excess <= 0) { color = '#22c55e'; level = 'Compliant'; compare = `Well within ${govtLimit.toLocaleString()} kg Limit`; }
+    else if (!isBlocked) { color = '#eab308'; level = 'Warning Margin Active'; compare = `Exceeds limits by less than 10%. Purchasing Authorized.`; }
+    else { color = '#ef4444'; level = 'REGULATORY BREACH'; compare = 'Over 10% limit tolerance. Mandated physical reduction required.'; }
 
     setChartData({
       labels: ['Energy', 'Transport', 'Food', 'Shopping'],
@@ -94,34 +112,34 @@ export default function CalculatorPage() {
     });
 
     const newRecos = [];
-    if (energy > 15000) {
+    if (energy > (govtLimit * 0.3)) {
       newRecos.push({
         icon: '⚡',
         title: 'Industrial Energy Audit',
         text: 'Optimize HVAC systems and switch to industrial solar panels.',
-        impact: 'High Impact', saving: Math.round(energy * 0.25)
+        impact: 'High Impact', saving: Math.max(1, Math.round(energy * 0.25))
       });
     }
-    if (transport > 20000) {
+    if (transport > (govtLimit * 0.4)) {
       newRecos.push({
         icon: '🚗',
         title: 'Fleet Electrification',
         text: 'Transition company vehicles to electric to cut fleet emissions by 60%.',
-        impact: 'Critical', saving: Math.round(transport * 0.40)
+        impact: 'Critical', saving: Math.max(1, Math.round(transport * 0.40))
       });
     }
-    if (food > 5000) {
+    if (food > (govtLimit * 0.1)) {
       newRecos.push({
         icon: '🥗',
         title: 'Sustainable Catering',
         text: 'Offer more vegetarian options in the company canteen.',
-        impact: 'Medium Impact', saving: Math.round(food * 0.35)
+        impact: 'Medium Impact', saving: Math.max(1, Math.round(food * 0.35))
       });
     }
     if (newRecos.length === 0) {
       newRecos.push({
         icon: '🌱', title: 'Maintain Low Footprint',
-        text: 'You are already below average! Consider buying credits to reach Net Zero.',
+        text: 'You are completely compliant with government regulations!',
         impact: 'Efficiency', saving: mlTotal
       });
     }
@@ -131,7 +149,10 @@ export default function CalculatorPage() {
       animatedTotal: 0,
       breakdown: { energy, transport, food, other },
       color, level, compare, pct,
-      credits: Math.ceil(mlTotal / 1000)
+      credits: allowedCredits,
+      govtLimit,
+      isBlocked, 
+      excess
     });
     setRecos(newRecos);
 
@@ -156,8 +177,19 @@ export default function CalculatorPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
           <div>
+            <div className="flex justify-between items-end mb-4 border-b border-cc-border pb-3">
+              <div>
+                <div className="text-[0.8rem] text-cc-muted2 font-semibold">Active Regulatory Entity Tracker</div>
+                <div className="text-[1.1rem] font-bold text-white">{user?.name || 'Demo Corp'}</div>
+              </div>
+              <div className="text-right bg-cc-card2 py-1.5 px-3 rounded-lg border border-cc-border2">
+                <div className="text-[0.65rem] text-cc-muted2 uppercase tracking-wide">Govt Mandatory Limit</div>
+                <div className="text-[0.95rem] font-extrabold text-cc-teal tracking-tight">{(user?.govtLimit || 50).toLocaleString()} kg</div>
+              </div>
+            </div>
+
             <CompanyForm ref={formRef} />
-            <button className="calc-btn mb-10" onClick={calculateCarbon}>
+            <button className="calc-btn mb-10 w-full" onClick={calculateCarbon}>
               <i className="fas fa-magic"></i> Calculate Company Footprint
             </button>
           </div>
@@ -209,7 +241,7 @@ export default function CalculatorPage() {
                   <div className="flex justify-between text-[0.78rem] text-cc-muted2 mb-1">
                     <span>0 kg</span>
                     <span style={{ color: result.color }}>Level: {result.level}</span>
-                    <span>100,000 kg</span>
+                    <span>{(result.govtLimit * 1.5).toLocaleString()} kg</span>
                   </div>
                   <div className="h-3 rounded-full bg-cc-border overflow-hidden my-2.5">
                     <div className="h-full rounded-full transition-[width] duration-1000 ease-out" style={{ width: `${result.pct}%`, background: result.color }}></div>
@@ -217,32 +249,48 @@ export default function CalculatorPage() {
                   <div className="text-center my-2 text-[0.85rem]">{result.compare}</div>
 
                   <div className="grid grid-cols-2 gap-2.5 mt-4">
-                    <div className="bg-cc-card rounded-[10px] py-2.5 px-3.5">
+                    <div className="bg-cc-card rounded-[10px] py-2.5 px-3.5 border border-cc-border2">
                       <div className="text-[0.72rem] text-cc-muted2 mb-0.5">⚡ Energy</div>
                       <div className="text-[0.95rem] font-bold text-cc-yellow">{result.breakdown.energy.toLocaleString()} kg</div>
                     </div>
-                    <div className="bg-cc-card rounded-[10px] py-2.5 px-3.5">
+                    <div className="bg-cc-card rounded-[10px] py-2.5 px-3.5 border border-cc-border2">
                       <div className="text-[0.72rem] text-cc-muted2 mb-0.5">🚗 Transport</div>
                       <div className="text-[0.95rem] font-bold text-cc-blue">{result.breakdown.transport.toLocaleString()} kg</div>
                     </div>
-                    <div className="bg-cc-card rounded-[10px] py-2.5 px-3.5">
+                    <div className="bg-cc-card rounded-[10px] py-2.5 px-3.5 border border-cc-border2">
                       <div className="text-[0.72rem] text-cc-muted2 mb-0.5">🍔 Food</div>
                       <div className="text-[0.95rem] font-bold text-cc-green">{result.breakdown.food.toLocaleString()} kg</div>
                     </div>
-                    <div className="bg-cc-card rounded-[10px] py-2.5 px-3.5">
+                    <div className="bg-cc-card rounded-[10px] py-2.5 px-3.5 border border-cc-border2">
                       <div className="text-[0.72rem] text-cc-muted2 mb-0.5">🛍️ Shopping</div>
                       <div className="text-[0.95rem] font-bold text-cc-purple">{result.breakdown.other.toLocaleString()} kg</div>
                     </div>
                   </div>
 
-                  <div className="mt-5 p-3.5 bg-cc-green/10 border border-cc-green/20 rounded-xl text-center">
-                    <div className="text-[0.8rem] text-cc-muted2 mb-1">Credits needed to offset</div>
-                    <div className="text-[1.5rem] font-extrabold text-cc-green">{result.credits} credits</div>
-                    <div className="text-[0.78rem] text-cc-muted2">≈ {(result.credits * 0.022).toFixed(3)} ETH</div>
-                    <button className="mt-3 py-2.5 px-6 bg-gradient-to-br from-cc-green to-cc-emerald border-none rounded-lg text-white font-bold cursor-pointer text-[0.85rem] hover:opacity-85" onClick={() => navigateTo('marketplace')}>
-                      Buy Offset Credits →
-                    </button>
-                  </div>
+                  {result.isBlocked ? (
+                    <div className="mt-5 p-4 bg-cc-red/10 border border-cc-red/30 rounded-xl text-center backdrop-blur-sm shadow-[0_0_20px_rgba(239,68,68,0.15)]">
+                      <div className="text-[0.85rem] font-black text-cc-red flex items-center justify-center gap-1.5 mb-2"><i className="fas fa-ban"></i> REGULATORY BLOCK MANDATED</div>
+                      <div className="text-[0.8rem] text-cc-muted2 leading-[1.6]">You exceeded the strict 10% tolerance margin above your <strong className="text-white">{result.govtLimit.toLocaleString()} kg</strong> limit. Offsetting is disallowed. You must physically reduce emissions immediately.</div>
+                    </div>
+                  ) : result.excess > 0 ? (
+                    <div className="mt-5 p-4 bg-cc-yellow/10 border border-cc-yellow/30 rounded-xl text-center shadow-[0_0_20px_rgba(234,179,8,0.1)]">
+                      <div className="text-[0.8rem] text-cc-muted2 mb-1">Excess Emissions (<span className="text-cc-yellow font-bold">10% Margin Active</span>)</div>
+                      <div className="text-[1.5rem] font-extrabold text-cc-yellow mt-1">Authorized for Purchasing</div>
+                      <div className="text-[0.78rem] text-cc-muted2 mt-1.5 leading-[1.5]">You are authorized to purchase up to <strong>{result.credits.toLocaleString()}</strong> offset credits to bring your metrics back under the mandated limit.</div>
+                      <button className="mt-3 pt-[10px] pb-[10px] px-6 w-full bg-cc-yellow/10 border border-cc-yellow hover:bg-cc-yellow hover:text-black rounded-lg text-cc-yellow font-bold cursor-pointer text-[0.85rem] transition-colors" onClick={() => navigateTo('marketplace')}>
+                        Purchase Offsets →
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="mt-5 p-4 bg-cc-green/10 border border-cc-green/30 rounded-xl text-center shadow-[0_0_20px_rgba(34,197,94,0.15)]">
+                      <div className="text-[0.8rem] text-cc-muted2 mb-1">Status: <span className="font-bold text-cc-green tracking-tight">Fully Compliant 🌿</span></div>
+                      <div className="text-[1.5rem] font-extrabold text-cc-green mt-1">Authorized for Purchasing</div>
+                      <div className="text-[0.78rem] text-cc-muted2 mt-1.5 leading-[1.5]">You are <strong className="text-white">{(result.govtLimit - result.total).toLocaleString()} kg</strong> under your govt limit. You are completely authorized to voluntarily purchase up to <strong>{result.credits.toLocaleString()}</strong> offset credits to formally reach Net Zero!</div>
+                      <button className="mt-3 pt-[10px] pb-[10px] px-6 w-full bg-cc-green/10 border border-cc-green hover:bg-cc-green hover:text-black rounded-lg text-cc-green font-bold cursor-pointer text-[0.85rem] transition-colors" onClick={() => navigateTo('marketplace')}>
+                        Purchase Voluntary Offsets →
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

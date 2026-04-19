@@ -4,7 +4,7 @@ import { PROJECTS } from '../../constants/projects';
 import { CONTRACT_ADDRESS } from '../../constants/contract';
 
 export default function MarketplacePage() {
-  const { navigateTo } = useAppState();
+  const { navigateTo, allowableOffset, offsettingBlocked, purchaseCompleted, transactions } = useAppState();
   const [filter, setFilter] = useState('all');
 
   const items = filter === 'all' ? PROJECTS : PROJECTS.filter(p => p.type === filter);
@@ -12,6 +12,9 @@ export default function MarketplacePage() {
   const handleBuyClicks = (projectId) => {
     window.dispatchEvent(new CustomEvent('openBuyModal', { detail: { projectId } }));
   };
+
+  const recentPurchase = transactions?.[0]?.credits || 0;
+  const carbonDeficit = Math.max(0, allowableOffset - recentPurchase);
 
   return (
     <div className="min-h-screen pt-[84px] pb-[60px] animate-fadeIn">
@@ -36,6 +39,32 @@ export default function MarketplacePage() {
           </div>
         </div>
 
+        {purchaseCompleted ? (
+          <div className="mb-6 p-4 rounded-xl bg-cc-green/10 border border-cc-green/30">
+            <h4 className="text-[0.95rem] font-bold text-cc-green mb-1"><i className="fas fa-check-double mr-2"></i> Offsetting Operations Fulfilled</h4>
+            <p className="text-[0.8rem] text-cc-muted2 leading-[1.6]">
+              You have successfully purchased <strong>{recentPurchase} carbon credits</strong> during this session. 
+              {carbonDeficit > 0 && <span className="ml-1 text-cc-yellow font-semibold">You still need {carbonDeficit} more credits to strictly neutralize your calculated footprint limitation!</span>}
+              <br/>Further purchases have been temporarily disabled. Refigure your footprint metrics to unlock additional purchasing.
+            </p>
+          </div>
+        ) : offsettingBlocked ? (
+          <div className="mb-6 p-4 rounded-xl bg-cc-red/10 border border-cc-red/30">
+            <h4 className="text-[0.95rem] font-bold text-cc-red mb-1"><i className="fas fa-lock mr-2"></i> Purchasing Locked by Regulatory Authority</h4>
+            <p className="text-[0.8rem] text-cc-muted2 leading-[1.6]">Your calculated baseline emissions exceeded the strict 10% tolerance over your mandated government limit. The offset registry is completely locked until you mathematically restructure your footprint parameters.</p>
+          </div>
+        ) : allowableOffset > 0 ? (
+          <div className="mb-6 p-4 rounded-xl bg-cc-green/10 border border-cc-green/30">
+            <h4 className="text-[0.95rem] font-bold text-cc-green mb-1"><i className="fas fa-check-circle mr-2"></i> Authorized for Marketplace Procurement</h4>
+            <p className="text-[0.8rem] text-cc-muted2 leading-[1.6]">The registry has evaluated your emissions metrics. You are fully authorized to purchase <strong>{allowableOffset} offset credits</strong> to neutralize your baseline and achieve Net Zero corporate limits.</p>
+          </div>
+        ) : (
+          <div className="mb-6 p-4 rounded-xl bg-cc-card2 border border-cc-border2">
+            <h4 className="text-[0.95rem] font-bold text-cc-muted2 mb-1"><i className="fas fa-calculator mr-2"></i> Calculation Required</h4>
+            <p className="text-[0.8rem] text-cc-muted2 leading-[1.6]">Please run your footprint through the ML Calculator first so the registry can determine your offset eligibility margins.</p>
+          </div>
+        )}
+
         <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-5">
           {items.map(p => (
             <div key={p.id} className="bg-cc-card border border-cc-border rounded-[18px] overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_40px_rgba(0,0,0,0.4)]">
@@ -51,16 +80,22 @@ export default function MarketplacePage() {
                   <span className="text-[0.72rem] py-1 px-2 rounded-md bg-white/5 text-cc-muted2">{p.country}</span>
                   <span className="text-[0.72rem] py-1 px-2 rounded-md bg-white/5 text-cc-muted2">{p.available.toLocaleString()} left</span>
                 </div>
-                <div className="flex justify-between items-center mb-[14px]">
+                  <div className="flex justify-between items-center mb-[14px]">
                   <div className="text-[0.85rem] text-cc-green font-semibold">🌿 {p.co2}</div>
                   <div className="text-right">
                     <div className="text-[1.1rem] font-extrabold text-cc-text">Ξ {p.priceEth}</div>
                     <div className="text-[0.72rem] text-cc-muted2">≈ ${p.priceUsd} USD</div>
                   </div>
                 </div>
-                <button className="calc-btn w-full mt-3" style={{ padding: '12px' }} onClick={() => handleBuyClicks(p.id)}>
-                  <i className="fab fa-ethereum"></i> Buy with ETH
-                </button>
+                {(offsettingBlocked || allowableOffset <= 0 || purchaseCompleted) ? (
+                  <button className="w-full mt-3 py-3 rounded-xl bg-cc-card2 text-cc-muted2 border border-cc-border2 font-bold cursor-not-allowed opacity-70" disabled title="Purchasing isolated by Regulatory Limits">
+                    <i className="fas fa-lock"></i> Purchasing Blocked
+                  </button>
+                ) : (
+                  <button className="calc-btn w-full mt-3" style={{ padding: '12px' }} onClick={() => handleBuyClicks(p.id)}>
+                    <i className="fab fa-ethereum"></i> Buy with ETH
+                  </button>
+                )}
               </div>
             </div>
           ))}

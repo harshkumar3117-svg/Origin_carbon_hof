@@ -5,7 +5,7 @@ import { CONTRACT_ADDRESS, CONTRACT_ABI } from '../../constants/contract';
 import { ethers } from 'ethers';
 
 export default function BuyModal() {
-  const { account, signer, showAlert, connectWallet, co2Balance, setCo2Balance, transactions, setTransactions } = useAppState();
+  const { account, signer, showAlert, connectWallet, co2Balance, setCo2Balance, transactions, setTransactions, allowableOffset, offsettingBlocked, setPurchaseCompleted } = useAppState();
   
   const [isOpen, setIsOpen] = useState(false);
   const [step, setStep] = useState(1);
@@ -20,8 +20,10 @@ export default function BuyModal() {
       const pId = e.detail.projectId;
       if (!account) {
         showAlert('🦊 Please connect MetaMask first!', 'error');
-        // If we can't await connectWallet properly here, just warn them. The modal will still open but they cannot buy.
-        // For better UX, we could call connectWallet.
+      }
+      if (offsettingBlocked || allowableOffset <= 0) {
+        showAlert('🚫 You are barred from purchasing credits! Exact allowed quantity is 0.', 'error');
+        return; // Regulatory hard lock
       }
       const p = PROJECTS.find(x => x.id === pId);
       setProject(p);
@@ -31,10 +33,10 @@ export default function BuyModal() {
     };
     window.addEventListener('openBuyModal', handleOpen);
     return () => window.removeEventListener('openBuyModal', handleOpen);
-  }, [account, showAlert]);
+  }, [account, showAlert, offsettingBlocked, allowableOffset]);
 
   const changeQty = (delta) => {
-    setQty(Math.max(1, Math.min(20, qty + delta)));
+    setQty(Math.max(1, Math.min(50, qty + delta)));
   };
 
   const closeModal = () => setIsOpen(false);
@@ -110,6 +112,7 @@ export default function BuyModal() {
 
       setTxHash(tHash);
       setStep(3);
+      setPurchaseCompleted(true);
       showAlert(`🎉 Purchase successful! ${qty} carbon credits minted!`, 'success');
 
     } catch (err) {

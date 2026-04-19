@@ -28,6 +28,11 @@ export function AppProvider({ children }) {
 
   // Chatbot State
   const [chatOpen, setChatOpen] = useState(false);
+
+  // 🏛️ Regulatory State Tracker
+  const [allowableOffset, setAllowableOffset] = useState(-1);
+  const [offsettingBlocked, setOffsettingBlocked] = useState(false);
+  const [purchaseCompleted, setPurchaseCompleted] = useState(false);
   
   // Alert Helper
   const showAlert = (message, type = 'info') => {
@@ -193,6 +198,7 @@ export function AppProvider({ children }) {
     connectWallet, disconnectWallet, shortAddr,
     isLoggedIn, setIsLoggedIn, userType, setUserType, user, setUser, logout,
     chatOpen, setChatOpen,
+    allowableOffset, setAllowableOffset, offsettingBlocked, setOffsettingBlocked, purchaseCompleted, setPurchaseCompleted,
     authModeIntent, setAuthModeIntent,
     authToken, setAuthToken, API_BASE_URL
   };
