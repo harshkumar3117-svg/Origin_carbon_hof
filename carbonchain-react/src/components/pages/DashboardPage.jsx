@@ -302,7 +302,15 @@ export default function DashboardPage() {
                               <td className="p-3.5 border-b border-cc-border text-[0.83rem]"><span className="font-semibold">{tx.project}</span></td>
                               <td className="p-3.5 border-b border-cc-border text-[0.83rem] text-cc-green font-bold">{tx.credits} CCT</td>
                               <td className="p-3.5 border-b border-cc-border text-[0.83rem] text-cc-orange">Ξ {tx.ethPaid}</td>
-                              <td className="p-3.5 border-b border-cc-border text-[0.83rem]"><a href={`https://sepolia.etherscan.io/tx/${tx.txHash}`} target="_blank" rel="noreferrer" className="text-cc-blue text-[0.78rem] decoration-none">{tx.txHash.slice(0,10)}...{tx.txHash.slice(-6)} ↗</a></td>
+                              <td className="p-3.5 border-b border-cc-border text-[0.83rem]">
+                                {tx.txHash ? (
+                                  <a href={`https://sepolia.etherscan.io/tx/${tx.txHash}`} target="_blank" rel="noreferrer" className="text-cc-blue text-[0.78rem] decoration-none">
+                                    {tx.txHash.slice(0,10)}...{tx.txHash.slice(-6)} ↗
+                                  </a>
+                                ) : (
+                                  <span className="text-cc-muted2 italic text-[0.78rem]">Pending...</span>
+                                )}
+                              </td>
                               <td className="p-3.5 border-b border-cc-border text-[0.83rem]">
                                 <span className={`py-1 px-2.5 rounded-full text-[0.72rem] font-bold ${tx.status === 'success' ? 'bg-cc-green/10 text-cc-green' : 'bg-cc-red/10 text-cc-red'}`}>
                                   {tx.status === 'success' ? '✅ Success' : '❌ Failed'}
