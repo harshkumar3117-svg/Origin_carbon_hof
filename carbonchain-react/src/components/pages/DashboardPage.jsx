@@ -215,16 +215,11 @@ export default function DashboardPage() {
                 </div>
                 <span className="ml-auto py-1 px-2.5 rounded-full text-[0.72rem] font-bold bg-cc-orange/10 text-cc-orange border border-cc-orange/30">⚡ Sepolia Testnet</span>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mt-4">
+              <div className="mt-4">
                 <div className="bg-cc-card2 rounded-xl p-4">
                   <div className="text-[0.75rem] text-cc-muted2 mb-1">⚡ ETH Balance</div>
                   <div className="text-[1.5rem] font-extrabold">{(+ethBalance).toFixed(4)} ETH</div>
                   <div className="text-[0.75rem] text-cc-muted2">Sepolia ETH</div>
-                </div>
-                <div className="bg-cc-card2 rounded-xl p-4">
-                  <div className="text-[0.75rem] text-cc-muted2 mb-1">🌿 CO₂ Credits</div>
-                  <div className="text-[1.5rem] font-extrabold text-cc-green">{co2Balance} CCT</div>
-                  <div className="text-[0.75rem] text-cc-muted2">CCT Tokens</div>
                 </div>
               </div>
             </div>
