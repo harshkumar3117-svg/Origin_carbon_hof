@@ -3,6 +3,7 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
 import { useAppState } from '../../hooks/useAppState';
 import CompanyForm from '../calculator/CompanyForm';
+import IndividualForm from '../calculator/IndividualForm';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -41,7 +42,8 @@ export default function CalculatorPage() {
     setResult(null);
 
     const payload = formRef.current.getPayload();
-    const apiUrl = 'http://localhost:5001/predict';
+    const isIndividual = userType === 'individual';
+    const apiUrl = isIndividual ? 'http://localhost:5000/predict' : 'http://localhost:5001/predict';
 
     try {
       const response = await fetch(apiUrl, {
@@ -59,8 +61,9 @@ export default function CalculatorPage() {
       }
     } catch (err) {
       console.error('ML Server error:', err);
-      const port = 5001;
-      const folder = 'company-data';
+      const isIndividual = userType === 'individual';
+      const port = isIndividual ? 5000 : 5001;
+      const folder = isIndividual ? 'individual_data' : 'company-data';
       setResult({ error: true, port, folder });
       showAlert(`❌ ML server not reachable on port ${port}. Start ${folder}/server.py`, 'error');
     } finally {
@@ -74,8 +77,10 @@ export default function CalculatorPage() {
     const food = Math.round(mlTotal * 0.15);
     const other = mlTotal - energy - transport - food;
 
+    const isIndividual = userType === 'individual';
+    
     // Fixed Limit explicitly defined beforehand
-    const govtLimit = user?.govtLimit || 50;
+    const govtLimit = isIndividual ? 4000 : (user?.govtLimit || 50);
     
     const maxTotal = govtLimit * 1.5;
     const pct = Math.min((mlTotal / maxTotal) * 100, 100);
@@ -86,7 +91,8 @@ export default function CalculatorPage() {
     let isBlocked = false;
     let allowedCredits = mlTotal; // Up to their total footprint
 
-    if (mlTotal > blockThreshold) {
+    // Only block companies using the threshold
+    if (!isIndividual && mlTotal > blockThreshold) {
        isBlocked = true;
        allowedCredits = 0; // Strict blocking
     }
@@ -97,9 +103,14 @@ export default function CalculatorPage() {
     setPurchaseCompleted(false);
 
     let color, level, compare;
-    if (excess <= 0) { color = '#22c55e'; level = 'Compliant'; compare = `Well within ${govtLimit.toLocaleString()} kg Limit`; }
-    else if (!isBlocked) { color = '#eab308'; level = 'Warning Margin Active'; compare = `Exceeds limits by less than 10%. Purchasing Authorized.`; }
-    else { color = '#ef4444'; level = 'REGULATORY BREACH'; compare = 'Over 10% limit tolerance. Mandated physical reduction required.'; }
+    if (isIndividual) {
+      if (excess <= 0) { color = '#22c55e'; level = 'Eco-Friendly'; compare = `Well within global average of ${govtLimit.toLocaleString()} kg`; }
+      else { color = '#ef4444'; level = 'Above Average'; compare = `Exceeds the target by ${excess.toLocaleString()} kg. Try to reduce your footprint.`; }
+    } else {
+      if (excess <= 0) { color = '#22c55e'; level = 'Compliant'; compare = `Well within ${govtLimit.toLocaleString()} kg Limit`; }
+      else if (!isBlocked) { color = '#eab308'; level = 'Warning Margin Active'; compare = `Exceeds limits by less than 10%. Purchasing Authorized.`; }
+      else { color = '#ef4444'; level = 'REGULATORY BREACH'; compare = 'Over 10% limit tolerance. Mandated physical reduction required.'; }
+    }
 
     setChartData({
       labels: ['Energy', 'Transport', 'Food', 'Shopping'],
@@ -152,7 +163,8 @@ export default function CalculatorPage() {
       credits: allowedCredits,
       govtLimit,
       isBlocked, 
-      excess
+      excess,
+      isIndividual
     });
     setRecos(newRecos);
 
@@ -168,29 +180,35 @@ export default function CalculatorPage() {
       <div className="max-w-[1100px] mx-auto px-5">
         <div className="pt-[30px] pb-5">
           <div className="text-[1.8rem] font-extrabold mb-1.5">
-            🏢 Company Carbon Calculator
+            {userType === 'individual' ? '👤 Personal Footprint Calculator' : '🏢 Company Carbon Calculator'}
           </div>
           <div className="text-[0.9rem] text-cc-muted2">
-            Professional ML tool for business emission tracking
+            {userType === 'individual' ? 'Professional ML tool for personal emission tracking' : 'Professional ML tool for business emission tracking'}
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
           <div>
-            <div className="flex justify-between items-end mb-4 border-b border-cc-border pb-3">
-              <div>
-                <div className="text-[0.8rem] text-cc-muted2 font-semibold">Active Regulatory Entity Tracker</div>
-                <div className="text-[1.1rem] font-bold text-white">{user?.name || 'Demo Corp'}</div>
+            {userType !== 'individual' && (
+              <div className="flex justify-between items-end mb-4 border-b border-cc-border pb-3">
+                <div>
+                  <div className="text-[0.8rem] text-cc-muted2 font-semibold">Active Regulatory Entity Tracker</div>
+                  <div className="text-[1.1rem] font-bold text-white">{user?.name || 'Demo Corp'}</div>
+                </div>
+                <div className="text-right bg-cc-card2 py-1.5 px-3 rounded-lg border border-cc-border2">
+                  <div className="text-[0.65rem] text-cc-muted2 uppercase tracking-wide">Govt Mandatory Limit</div>
+                  <div className="text-[0.95rem] font-extrabold text-cc-teal tracking-tight">{(user?.govtLimit || 50).toLocaleString()} kg</div>
+                </div>
               </div>
-              <div className="text-right bg-cc-card2 py-1.5 px-3 rounded-lg border border-cc-border2">
-                <div className="text-[0.65rem] text-cc-muted2 uppercase tracking-wide">Govt Mandatory Limit</div>
-                <div className="text-[0.95rem] font-extrabold text-cc-teal tracking-tight">{(user?.govtLimit || 50).toLocaleString()} kg</div>
-              </div>
-            </div>
+            )}
 
-            <CompanyForm ref={formRef} />
+            {userType === 'individual' ? (
+              <IndividualForm ref={formRef} />
+            ) : (
+              <CompanyForm ref={formRef} />
+            )}
             <button className="calc-btn mb-10 w-full" onClick={calculateCarbon}>
-              <i className="fas fa-magic"></i> Calculate Company Footprint
+              <i className="fas fa-magic"></i> Calculate {userType === 'individual' ? 'Personal' : 'Company'} Footprint
             </button>
           </div>
 
@@ -267,7 +285,13 @@ export default function CalculatorPage() {
                     </div>
                   </div>
 
-                  {result.isBlocked ? (
+                  {result.isIndividual ? (
+                    <div className="mt-5 p-4 rounded-xl text-center shadow-[0_0_20px_rgba(0,0,0,0.1)]" style={{ backgroundColor: `${result.color}15`, border: `1px solid ${result.color}40` }}>
+                      <div className="text-[0.8rem] text-cc-muted2 mb-1">Status: <span className="font-bold tracking-tight" style={{ color: result.color }}>{result.level}</span></div>
+                      <div className="text-[1.3rem] font-extrabold mt-1" style={{ color: result.color }}>Personal Overview</div>
+                      <div className="text-[0.78rem] text-cc-muted2 mt-1.5 leading-[1.5]">{result.compare} See recommendations below for how to improve your lifestyle footprint.</div>
+                    </div>
+                  ) : result.isBlocked ? (
                     <div className="mt-5 p-4 bg-cc-red/10 border border-cc-red/30 rounded-xl text-center backdrop-blur-sm shadow-[0_0_20px_rgba(239,68,68,0.15)]">
                       <div className="text-[0.85rem] font-black text-cc-red flex items-center justify-center gap-1.5 mb-2"><i className="fas fa-ban"></i> REGULATORY BLOCK MANDATED</div>
                       <div className="text-[0.8rem] text-cc-muted2 leading-[1.6]">You exceeded the strict 10% tolerance margin above your <strong className="text-white">{result.govtLimit.toLocaleString()} kg</strong> limit. Offsetting is disallowed. You must physically reduce emissions immediately.</div>
@@ -285,7 +309,7 @@ export default function CalculatorPage() {
                     <div className="mt-5 p-4 bg-cc-green/10 border border-cc-green/30 rounded-xl text-center shadow-[0_0_20px_rgba(34,197,94,0.15)]">
                       <div className="text-[0.8rem] text-cc-muted2 mb-1">Status: <span className="font-bold text-cc-green tracking-tight">Fully Compliant 🌿</span></div>
                       <div className="text-[1.5rem] font-extrabold text-cc-green mt-1">Authorized for Purchasing</div>
-                      <div className="text-[0.78rem] text-cc-muted2 mt-1.5 leading-[1.5]">You are <strong className="text-white">{(result.govtLimit - result.total).toLocaleString()} kg</strong> under your govt limit. You are completely authorized to voluntarily purchase up to <strong>{result.credits.toLocaleString()}</strong> offset credits to formally reach Net Zero!</div>
+                      <div className="text-[0.78rem] text-cc-muted2 mt-1.5 leading-[1.5]">You are <strong className="text-white">{(result.govtLimit - result.total).toLocaleString()} kg</strong> under your target limit.</div>
                       <button className="mt-3 pt-[10px] pb-[10px] px-6 w-full bg-cc-green/10 border border-cc-green hover:bg-cc-green hover:text-black rounded-lg text-cc-green font-bold cursor-pointer text-[0.85rem] transition-colors" onClick={() => navigateTo('marketplace')}>
                         Purchase Voluntary Offsets →
                       </button>

@@ -15,7 +15,7 @@ import AboutUsPage from './components/pages/AboutUsPage';
 import ContactUsPage from './components/pages/ContactUsPage';
 
 export default function App() {
-  const { currentPage } = useAppState();
+  const { currentPage, userType } = useAppState();
 
   return (
     <>
@@ -24,7 +24,7 @@ export default function App() {
 
       {currentPage === 'home' && <HomePage />}
       {currentPage === 'calculator' && <CalculatorPage />}
-      {currentPage === 'marketplace' && <MarketplacePage />}
+      {currentPage === 'marketplace' && userType !== 'individual' && <MarketplacePage />}
       {currentPage === 'dashboard' && <DashboardPage />}
       {currentPage === 'about' && <AboutUsPage />}
       {currentPage === 'contact' && <ContactUsPage />}

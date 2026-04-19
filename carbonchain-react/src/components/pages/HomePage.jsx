@@ -2,7 +2,7 @@ import React from 'react';
 import { useAppState } from '../../hooks/useAppState';
 
 export default function HomePage() {
-  const { navigateTo, handleGatedNav, isLoggedIn, connectWallet } = useAppState();
+  const { navigateTo, handleGatedNav, isLoggedIn, connectWallet, user, userType } = useAppState();
 
   return (
     <div className="min-h-screen pt-[84px] pb-[60px] animate-fadeIn">
@@ -28,7 +28,7 @@ export default function HomePage() {
           <button className="btn-primary" onClick={() => handleGatedNav('calculator')}>
             <i className="fas fa-calculator"></i> Calculate Now
           </button>
-          {isLoggedIn && (
+          {isLoggedIn && userType !== 'individual' && (
             <button className="btn-outline" onClick={() => navigateTo('marketplace')}>
               <i className="fas fa-shopping-cart"></i> Buy Credits
             </button>
@@ -67,7 +67,7 @@ export default function HomePage() {
             <div className="mt-4 text-cc-green text-[0.82rem] font-semibold">Calculate →</div>
           </div>
           
-          {isLoggedIn && (
+          {isLoggedIn && userType !== 'individual' && (
             <div 
               className="bg-cc-card border border-cc-border rounded-[18px] p-6 transition-all duration-300 cursor-pointer hover:-translate-y-1.25 hover:border-cc-green hover:shadow-[0_16px_40px_rgba(0,0,0,0.4)]"
               onClick={() => navigateTo('marketplace')}

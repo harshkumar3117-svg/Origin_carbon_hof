@@ -43,12 +43,14 @@ export default function Navbar() {
 
         {isLoggedIn && (
           <>
-            <button
-              className={`py-1.5 px-3.5 rounded-lg text-[0.82rem] font-semibold transition-all duration-200 border-none bg-transparent ${currentPage === 'marketplace' ? 'bg-cc-green/10 text-cc-green' : 'text-cc-muted2 hover:bg-cc-green/10 hover:text-cc-green'}`}
-              onClick={() => navigateTo('marketplace')}
-            >
-              🛒 Buy Credits
-            </button>
+            {userType !== 'individual' && (
+              <button
+                className={`py-1.5 px-3.5 rounded-lg text-[0.82rem] font-semibold transition-all duration-200 border-none bg-transparent ${currentPage === 'marketplace' ? 'bg-cc-green/10 text-cc-green' : 'text-cc-muted2 hover:bg-cc-green/10 hover:text-cc-green'}`}
+                onClick={() => navigateTo('marketplace')}
+              >
+                🛒 Buy Credits
+              </button>
+            )}
             <button
               className={`py-1.5 px-3.5 rounded-lg text-[0.82rem] font-semibold transition-all duration-200 border-none bg-transparent ${currentPage === 'dashboard' ? 'bg-cc-green/10 text-cc-green' : 'text-cc-muted2 hover:bg-cc-green/10 hover:text-cc-green'}`}
               onClick={() => navigateTo('dashboard')}
