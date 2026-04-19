@@ -39,24 +39,15 @@ export default function MarketplacePage() {
           </div>
         </div>
 
-        {purchaseCompleted ? (
-          <div className="mb-6 p-4 rounded-xl bg-cc-green/10 border border-cc-green/30">
-            <h4 className="text-[0.95rem] font-bold text-cc-green mb-1"><i className="fas fa-check-double mr-2"></i> Offsetting Operations Fulfilled</h4>
-            <p className="text-[0.8rem] text-cc-muted2 leading-[1.6]">
-              You have successfully purchased <strong>{recentPurchase} carbon credits</strong> during this session. 
-              {carbonDeficit > 0 && <span className="ml-1 text-cc-yellow font-semibold">You still need {carbonDeficit} more credits to strictly neutralize your calculated footprint limitation!</span>}
-              <br/>Further purchases have been temporarily disabled. Refigure your footprint metrics to unlock additional purchasing.
-            </p>
-          </div>
-        ) : offsettingBlocked ? (
+        {offsettingBlocked ? (
           <div className="mb-6 p-4 rounded-xl bg-cc-red/10 border border-cc-red/30">
             <h4 className="text-[0.95rem] font-bold text-cc-red mb-1"><i className="fas fa-lock mr-2"></i> Purchasing Locked by Regulatory Authority</h4>
-            <p className="text-[0.8rem] text-cc-muted2 leading-[1.6]">Your calculated baseline emissions exceeded the strict 10% tolerance over your mandated government limit. The offset registry is completely locked until you mathematically restructure your footprint parameters.</p>
+            <p className="text-[0.8rem] text-cc-muted2 leading-[1.6]">Your calculated baseline emissions exceeded the strict tolerance margin. Purchasing is locked until you recalculate with a lower footprint.</p>
           </div>
         ) : allowableOffset > 0 ? (
           <div className="mb-6 p-4 rounded-xl bg-cc-green/10 border border-cc-green/30">
             <h4 className="text-[0.95rem] font-bold text-cc-green mb-1"><i className="fas fa-check-circle mr-2"></i> Authorized for Marketplace Procurement</h4>
-            <p className="text-[0.8rem] text-cc-muted2 leading-[1.6]">The registry has evaluated your emissions metrics. You are fully authorized to purchase <strong>{allowableOffset} offset credits</strong> to neutralize your baseline and achieve Net Zero corporate limits.</p>
+            <p className="text-[0.8rem] text-cc-muted2 leading-[1.6]">The registry has evaluated your emissions metrics. You are authorized to purchase up to <strong>{allowableOffset} offset credits</strong>.</p>
           </div>
         ) : (
           <div className="mb-6 p-4 rounded-xl bg-cc-card2 border border-cc-border2">
@@ -87,7 +78,7 @@ export default function MarketplacePage() {
                     <div className="text-[0.72rem] text-cc-muted2">≈ ${p.priceUsd} USD</div>
                   </div>
                 </div>
-                {(offsettingBlocked || allowableOffset <= 0 || purchaseCompleted) ? (
+                {(offsettingBlocked || allowableOffset <= 0) ? (
                   <button className="w-full mt-3 py-3 rounded-xl bg-cc-card2 text-cc-muted2 border border-cc-border2 font-bold cursor-not-allowed opacity-70" disabled title="Purchasing isolated by Regulatory Limits">
                     <i className="fas fa-lock"></i> Purchasing Blocked
                   </button>

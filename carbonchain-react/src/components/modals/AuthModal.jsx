@@ -116,10 +116,11 @@ export default function AuthModal() {
   };
 
   const finalizeLogin = (data) => {
-    const { token, name, userType, email } = data;
+    const { token, name, email } = data;
+    const finalUserType = data.userType || data.type || 'individual';
     
     // Inject custom government dataset mapped logically to their Registered Name
-    if (userType !== 'individual') {
+    if (finalUserType !== 'individual') {
       data.govtLimit = generateGovtLimit(name);
     }
 
@@ -127,10 +128,10 @@ export default function AuthModal() {
     setAuthToken(token);
     setUser(data);
     setIsLoggedIn(true);
-    setUserType(userType || 'individual');
+    setUserType(finalUserType);
     closeAuthModal();
     
-    if (userType === 'company') {
+    if (finalUserType === 'company') {
       showAlert('✅ Logged in successfully. Regulatory Baseline Authorized.', 'success');
     } else {
       showAlert('✅ Logged in successfully.', 'success');

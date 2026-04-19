@@ -80,10 +80,18 @@ export default function Navbar() {
       <div className="flex items-center gap-2.5">
         <div id="authSection">
           {isLoggedIn ? (
-            <div className="flex items-center gap-2 bg-cc-card2 border border-cc-border py-1 px-3 rounded-full text-[0.8rem]">
-              <i className="fas fa-building"></i>
-              <span>{user?.name?.split(' ')[0] || user?.companyName?.split(' ')[0]}</span>
-              <i className="fas fa-sign-out-alt text-cc-red cursor-pointer text-[0.8rem] ml-2" onClick={logout} title="Logout"></i>
+            <div className="flex items-center gap-3 bg-[#0f172a] border border-white/5 py-1.5 px-2.5 rounded-[16px] shadow-lg">
+              <div className="w-8 h-8 rounded-full bg-cc-green flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.3)]">
+                 <i className="fas fa-user text-white text-[0.8rem]"></i>
+              </div>
+              <span className="text-white font-black text-[0.9rem] lowercase">{(user?.name || 'User')?.split(' ')[0][0] || 'u'}</span>
+              <div 
+                className="w-8 h-8 flex items-center justify-center cursor-pointer hover:bg-white/5 rounded-full transition-all"
+                onClick={logout}
+                title="Logout"
+              >
+                <i className="fas fa-power-off text-cc-red text-[0.9rem] opacity-80 hover:opacity-100"></i>
+              </div>
             </div>
           ) : (
             <div className="flex gap-2">
