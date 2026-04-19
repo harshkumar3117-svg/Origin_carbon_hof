@@ -108,40 +108,27 @@ export default function DashboardPage() {
     setAuditLoading(false);
   };
 
-  const [isSyncing, setIsSyncing] = useState(false);
+  const totalOffset = transactions.reduce((s,t) => s + (t.co2Offset||0), 0);
+  const totalEth = transactions.reduce((s,t) => s + parseFloat(t.ethPaid||0), 0);
 
-  useEffect(() => {
-    if (account) {
-      setIsSyncing(true);
-      const timer = setTimeout(() => setIsSyncing(false), 800);
-      return () => clearTimeout(timer);
+  let rank = '🏆 Top 10%';
+  if (totalOffset < 500) rank = '🌱 Beginner';
+  else if (totalOffset < 2000) rank = '🌿 Active';
+  else if (totalOffset < 10000) rank = '🌳 Champion';
+  else rank = '🏆 Hero';
+
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const monthly = new Array(12).fill(0);
+  transactions.forEach(tx => {
+    let m = 0;
+    // Handled depending on whether tx.id is a timestamp or blocknumber. Since we set it as Date.now() for local txs:
+    if (tx.id > 1000000000000) {
+      m = new Date(tx.id).getMonth();
+    } else {
+      m = new Date().getMonth(); // Rough fallback for blockchain sync without timestamp
     }
-  }, [account]);
-
-  const safeNumber = (val, decimals = 0) => {
-    const num = parseFloat(val);
-    return isNaN(num) ? (0).toFixed(decimals) : num.toFixed(decimals);
-  };
-
-  const safeInt = (val) => {
-    const num = parseInt(val);
-    return isNaN(num) ? 0 : num;
-  };
-
-  const totalOffset = Array.isArray(transactions) ? transactions.reduce((s,t) => s + (safeInt(t.co2Offset)), 0) : 0;
-  const totalEth = Array.isArray(transactions) ? transactions.reduce((s,t) => s + (parseFloat(t.ethPaid)||0), 0) : 0;
-
-  // Monthly breakdown for chart
-  const months = ['Jan','Feb','Mar','Apr','May','Jun'];
-  const monthly = [0, 0, 0, 0, 0, 0];
-  if (Array.isArray(transactions)) {
-    transactions.forEach(tx => {
-       // Handle 'Web3' or non-standard date strings from blockchain
-       const dateVal = (!tx.date || tx.date === 'Web3') ? new Date() : new Date(tx.date);
-       const m = dateVal.getMonth();
-       if (m >= 0 && m < 6) monthly[m] += safeInt(tx.co2Offset);
-    });
-  }
+    monthly[m] += tx.co2Offset || 0;
+  });
 
   const chartData = {
     labels: months,
@@ -210,22 +197,15 @@ export default function DashboardPage() {
           <div className="text-[0.9rem] text-cc-muted2">Track your offset progress and transaction history</div>
         </div>
 
-        {(!account || isSyncing) ? (
+        {!account ? (
           <div className="text-center py-20 px-5">
-            <div className="text-[4rem] mb-6 animate-pulse">🦊</div>
-            <h3 className="text-[1.8rem] font-bold mb-3">{isSyncing ? 'Syncing Blockchain Data...' : 'Connect Your Wallet'}</h3>
-            <p className="text-cc-muted2 mb-8 max-w-[500px] mx-auto">
-              {isSyncing ? 'Please wait while we fetch your personal dashboard and transaction history from the network.' : 'Connect MetaMask to view your personal dashboard, token balance, and transaction history.'}
-            </p>
-            {!isSyncing && (
-                <button className="btn-primary" onClick={connectWallet}><i className="fas fa-wallet"></i> Connect MetaMask</button>
-            )}
-            {isSyncing && (
-                <div className="w-[48px] h-[48px] border-4 border-cc-border border-t-cc-green rounded-full animate-spin mx-auto"></div>
-            )}
+            <div className="text-[4rem] mb-4">🦊</div>
+            <h3 className="text-[1.4rem] font-bold mb-2">Connect Your Wallet</h3>
+            <p className="text-cc-muted2 mb-6 max-w-[440px] mx-auto">Connect MetaMask to view your personal dashboard, token balance, and transaction history.</p>
+            <button className="btn-primary" onClick={connectWallet}><i className="fas fa-wallet"></i> Connect MetaMask</button>
           </div>
         ) : (
-          <div className="animate-fadeIn">
+          <div>
             <div className="bg-cc-card border border-cc-border rounded-[18px] p-7 mb-6">
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-[42px] h-[42px] rounded-full bg-gradient-to-br from-cc-green to-cc-blue flex items-center justify-center text-[1.2rem]">🦊</div>
@@ -238,12 +218,12 @@ export default function DashboardPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mt-4">
                 <div className="bg-cc-card2 rounded-xl p-4">
                   <div className="text-[0.75rem] text-cc-muted2 mb-1">⚡ ETH Balance</div>
-                  <div className="text-[1.5rem] font-extrabold">{safeNumber(ethBalance, 4)} ETH</div>
+                  <div className="text-[1.5rem] font-extrabold">{(+ethBalance).toFixed(4)} ETH</div>
                   <div className="text-[0.75rem] text-cc-muted2">Sepolia ETH</div>
                 </div>
                 <div className="bg-cc-card2 rounded-xl p-4">
                   <div className="text-[0.75rem] text-cc-muted2 mb-1">🌿 CO₂ Credits</div>
-                  <div className="text-[1.5rem] font-extrabold text-cc-green">{safeInt(co2Balance)} CCT</div>
+                  <div className="text-[1.5rem] font-extrabold text-cc-green">{co2Balance} CCT</div>
                   <div className="text-[0.75rem] text-cc-muted2">CCT Tokens</div>
                 </div>
               </div>
@@ -266,15 +246,13 @@ export default function DashboardPage() {
               <div className="bg-cc-card border border-cc-border rounded-2xl p-5">
                 <div className="w-11 h-11 rounded-xl flex items-center justify-center text-[1.2rem] mb-3 bg-cc-orange/10 text-cc-orange">Ξ</div>
                 <div className="text-[0.78rem] text-cc-muted2 mb-1">ETH Spent</div>
-                <div className="text-[1.6rem] font-extrabold text-cc-orange">{safeNumber(totalEth, 4)} ETH</div>
+                <div className="text-[1.6rem] font-extrabold text-cc-orange">{totalEth.toFixed(4)} ETH</div>
                 <div className="text-[0.75rem] mt-1 text-cc-muted2">Total investment</div>
               </div>
               <div className="bg-cc-card border border-cc-border rounded-2xl p-5">
                 <div className="w-11 h-11 rounded-xl flex items-center justify-center text-[1.2rem] mb-3 bg-cc-purple/10 text-cc-purple">🏆</div>
                 <div className="text-[0.78rem] text-cc-muted2 mb-1">Carbon Rank</div>
-                <div className="text-[1.6rem] font-extrabold text-cc-purple">
-                    {totalOffset < 500 ? '🌱 Beginner' : totalOffset < 2000 ? '🌿 Active' : totalOffset < 10000 ? '🌳 Champion' : '🏆 Hero'}
-                </div>
+                <div className="text-[1.6rem] font-extrabold text-cc-purple">{rank}</div>
                 <div className="text-[0.75rem] mt-1 text-cc-muted2">vs global avg</div>
               </div>
             </div>
@@ -324,13 +302,7 @@ export default function DashboardPage() {
                               <td className="p-3.5 border-b border-cc-border text-[0.83rem]"><span className="font-semibold">{tx.project}</span></td>
                               <td className="p-3.5 border-b border-cc-border text-[0.83rem] text-cc-green font-bold">{tx.credits} CCT</td>
                               <td className="p-3.5 border-b border-cc-border text-[0.83rem] text-cc-orange">Ξ {tx.ethPaid}</td>
-                              <td className="p-3.5 border-b border-cc-border text-[0.83rem]">
-                                {tx.txHash ? (
-                                  <a href={`https://sepolia.etherscan.io/tx/${tx.txHash}`} target="_blank" rel="noreferrer" className="text-cc-blue text-[0.78rem] decoration-none">
-                                    {tx.txHash.slice(0,10)}...{tx.txHash.slice(-6)} ↗
-                                  </a>
-                                ) : 'N/A'}
-                              </td>
+                              <td className="p-3.5 border-b border-cc-border text-[0.83rem]"><a href={`https://sepolia.etherscan.io/tx/${tx.txHash}`} target="_blank" rel="noreferrer" className="text-cc-blue text-[0.78rem] decoration-none">{tx.txHash.slice(0,10)}...{tx.txHash.slice(-6)} ↗</a></td>
                               <td className="p-3.5 border-b border-cc-border text-[0.83rem]">
                                 <span className={`py-1 px-2.5 rounded-full text-[0.72rem] font-bold ${tx.status === 'success' ? 'bg-cc-green/10 text-cc-green' : 'bg-cc-red/10 text-cc-red'}`}>
                                   {tx.status === 'success' ? '✅ Success' : '❌ Failed'}
