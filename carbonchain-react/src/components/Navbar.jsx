@@ -80,18 +80,19 @@ export default function Navbar() {
       <div className="flex items-center gap-2.5">
         <div id="authSection">
           {isLoggedIn ? (
-            <div className="flex items-center gap-3 bg-[#0f172a] border border-white/5 py-1.5 px-2.5 rounded-[16px] shadow-lg">
-              <div className="w-8 h-8 rounded-full bg-cc-green flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.3)]">
-                 <i className="fas fa-user text-white text-[0.8rem]"></i>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 py-1.5 px-3 bg-cc-card border border-cc-border rounded-xl">
+                 <div className="w-6 h-6 rounded-full bg-cc-green flex items-center justify-center text-[0.7rem] font-bold text-white">
+                   {(user?.name || 'User')[0].toUpperCase()}
+                 </div>
+                 <span className="text-[0.8rem] font-bold text-cc-text">{user?.name || 'User'}</span>
               </div>
-              <span className="text-white font-black text-[0.9rem] lowercase">{(user?.name || 'User')?.split(' ')[0][0] || 'u'}</span>
-              <div 
-                className="w-8 h-8 flex items-center justify-center cursor-pointer hover:bg-white/5 rounded-full transition-all"
+              <button
+                className="py-1.5 px-3.5 bg-cc-red/10 border border-cc-red/20 rounded-xl text-cc-red text-[0.8rem] font-bold hover:bg-cc-red hover:text-white transition-all"
                 onClick={logout}
-                title="Logout"
               >
-                <i className="fas fa-power-off text-cc-red text-[0.9rem] opacity-80 hover:opacity-100"></i>
-              </div>
+                Logout
+              </button>
             </div>
           ) : (
             <div className="flex gap-2">
