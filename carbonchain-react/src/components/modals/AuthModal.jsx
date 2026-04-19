@@ -98,20 +98,20 @@ export default function AuthModal() {
 
   // 🏛️ Company Name Deterministic Limit Generator
   const generateGovtLimit = (companyStr) => {
-    if (!companyStr) return 50;
+    if (!companyStr) return 600;
     
     // Exact overrides for seamless presentation demos
     const lowered = companyStr.toLowerCase();
-    if (lowered.includes('demo') || lowered.includes('test')) return 70; 
-    if (lowered.includes('small')) return 30;
-    if (lowered.includes('large')) return 100;
+    if (lowered.includes('demo') || lowered.includes('test')) return 600; 
+    if (lowered.includes('small')) return 500;
+    if (lowered.includes('large')) return 800;
 
     let hash = 0;
     for (let i = 0; i < companyStr.length; i++) {
         hash = companyStr.charCodeAt(i) + ((hash << 5) - hash);
     }
-    const minLimit = 50; 
-    const maxLimit = 90;
+    const minLimit = 600; 
+    const maxLimit = 1200;
     return minLimit + (Math.abs(hash) % (maxLimit - minLimit + 1));
   };
 

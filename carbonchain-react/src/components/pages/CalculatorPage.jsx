@@ -80,7 +80,7 @@ export default function CalculatorPage() {
     const isIndividual = userType === 'individual';
     
     // Fixed Limit explicitly defined beforehand
-    const govtLimit = isIndividual ? 4000 : (user?.govtLimit || 50);
+    const govtLimit = isIndividual ? 4000 : (user?.govtLimit || 600);
     
     const maxTotal = govtLimit * 1.5;
     const pct = Math.min((mlTotal / maxTotal) * 100, 100);
@@ -197,7 +197,7 @@ export default function CalculatorPage() {
                 </div>
                 <div className="text-right bg-cc-card2 py-1.5 px-3 rounded-lg border border-cc-border2">
                   <div className="text-[0.65rem] text-cc-muted2 uppercase tracking-wide">Govt Mandatory Limit</div>
-                  <div className="text-[0.95rem] font-extrabold text-cc-teal tracking-tight">{(user?.govtLimit || 50).toLocaleString()} kg</div>
+                  <div className="text-[0.95rem] font-extrabold text-cc-teal tracking-tight">{(user?.govtLimit || 600).toLocaleString()} kg</div>
                 </div>
               </div>
             )}
