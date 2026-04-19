@@ -161,8 +161,8 @@ export default function DashboardPage() {
     setAuditLoading(false);
   };
 
-  const totalOffset = transactions.reduce((s,t) => s + (t.co2Offset||0), 0);
-  const totalEth = transactions.reduce((s,t) => s + parseFloat(t.ethPaid||0), 0);
+  const totalOffset = (transactions || []).reduce((s,t) => s + (t.co2Offset||0), 0);
+  const totalEth = (transactions || []).reduce((s,t) => s + parseFloat(t.ethPaid||0), 0);
 
   let rank = '🏆 Top 10%';
   if (totalOffset < 500) rank = '🌱 Beginner';
@@ -282,7 +282,6 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {userType === 'company' && (
             <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-4 mb-7">
               <div className="bg-cc-card border border-cc-border rounded-2xl p-5.5 p-5">
                 <div className="w-11 h-11 rounded-xl flex items-center justify-center text-[1.2rem] mb-3 bg-cc-green/10 text-cc-green">🌿</div>
@@ -309,18 +308,18 @@ export default function DashboardPage() {
                 <div className="text-[0.75rem] mt-1 text-cc-muted2">vs global avg</div>
               </div>
             </div>
-            )}
 
-            {userType === 'company' && (
-              <>
+            <div className="mt-8">
+              {userType === 'company' && (
                 <div className="bg-cc-card border border-cc-border rounded-[18px] p-6 mb-6">
                   <div className="text-[1rem] font-bold mb-4">📈 Monthly CO₂ Offset Progress</div>
                   <div className="relative h-[200px]">
                     <Bar data={chartData} options={{ maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { color: 'rgba(255,255,255,.05)' }, ticks: { color: '#64748b' } }, y: { grid: { color: 'rgba(255,255,255,.05)' }, ticks: { color: '#64748b' } } } }} />
                   </div>
                 </div>
+              )}
 
-                <div className="bg-cc-card border border-cc-border rounded-[18px] overflow-hidden">
+              <div className="bg-cc-card border border-cc-border rounded-[18px] overflow-hidden mb-6">
                   <div className="p-4 flex justify-between items-center border-b border-cc-border">
                     <div className="text-[1rem] font-bold">🔗 Transaction History</div>
                     <div className="flex gap-2">
@@ -367,9 +366,8 @@ export default function DashboardPage() {
                       </tbody>
                     </table>
                   </div>
-                </div>
-              </>
-            )}
+              </div>
+            </div>
 
             {userType === 'individual' && (
               <div className="animate-slideUp">

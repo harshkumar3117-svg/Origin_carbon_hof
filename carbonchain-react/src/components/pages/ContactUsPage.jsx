@@ -84,7 +84,7 @@ export default function ContactUsPage() {
         <div className="bg-cc-card2 border border-cc-border2 rounded-xl p-5 text-center">
           <div className="text-[1.5rem] text-cc-purple mb-3"><i className="fas fa-map-marker-alt"></i></div>
           <div className="font-bold mb-1">HQ</div>
-          <div className="text-[0.8rem] text-cc-muted2">110,Ground floor Ahmadabad,Gujrat</div>
+          <div className="text-[0.8rem] text-cc-muted2 leading-relaxed">T-Hub Phase 2, Kavuri Hills, Madhapur, Hyderabad, Telangana</div>
         </div>
       </div>
     </div>
