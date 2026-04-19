@@ -61,7 +61,7 @@ export default function BuyModal() {
     
     try {
       const totalEth = project.priceEth * qty;
-      const ethAmount = ethers.utils.parseEther(totalEth.toFixed(6));
+      const ethAmount = ethers.parseEther(totalEth.toFixed(6));
 
       let tHash;
 

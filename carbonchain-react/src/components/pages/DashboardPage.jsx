@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
+import axios from 'axios';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Tooltip } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
 import * as XLSX from 'xlsx';
@@ -7,7 +8,105 @@ import { useAppState } from '../../hooks/useAppState';
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip);
 
 export default function DashboardPage() {
-  const { account, ethBalance, co2Balance, transactions, connectWallet, shortAddr, showAlert, userType, user } = useAppState();
+  const { account, ethBalance, co2Balance, transactions, connectWallet, shortAddr, showAlert, userType, user, navigateTo } = useAppState();
+
+  // Audit photo upload state
+  const fileInputRef = useRef(null);
+  const [auditPhoto, setAuditPhoto] = useState(null);
+  const [auditResult, setAuditResult] = useState(null);
+  const [auditLoading, setAuditLoading] = useState(false);
+
+  const AUDIT_ACHIEVEMENTS = [
+    { name: 'Eco-Commuter', icon: '🚲', desc: 'Spotted cycling or walking to reduce transport emissions!', badge: 'Transport Hero', color: '#22c55e' },
+    { name: 'Green Kitchen', icon: '🥗', desc: 'Healthy, plant-based meal detected — less food carbon!', badge: 'Food Warrior', color: '#3b82f6' },
+    { name: 'Waste Reducer', icon: '♻️', desc: 'Recycling or composting activity captured!', badge: 'Waste Champion', color: '#a855f7' },
+    { name: 'Solar Observer', icon: '☀️', desc: 'Renewable energy source in frame — clean power!', badge: 'Energy Saver', color: '#f97316' },
+    { name: 'Nature Guardian', icon: '🌳', desc: 'Outdoor green activity — planting or nature walk!', badge: 'Planet Saver', color: '#14b8a6' },
+  ];
+
+  const handleAuditClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handlePhotoUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate image
+    if (!file.type.startsWith('image/')) {
+      showAlert('❌ Please upload an image file (JPG, PNG, etc.)', 'error');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      const base64Image = ev.target.result;
+      setAuditPhoto(base64Image);
+      setAuditLoading(true);
+      setAuditResult(null);
+
+      try {
+        const response = await axios.post(
+          'https://api.groq.com/openai/v1/chat/completions',
+          {
+            model: 'llama-3.2-11b-vision-preview',
+            messages: [
+              {
+                role: 'user',
+                content: [
+                  {
+                    type: 'text',
+                    text: `Analyze this image. If it shows an eco-friendly or environmental activity (cycling, walking, recycling, composting, solar panels, wind turbines, plant-based food, or nature/planting), respond exactly with one of these names: [Eco-Commuter, Green Kitchen, Waste Reducer, Solar Observer, Nature Guardian]. If the photo does not clearly show an eco-friendly activity or is unrelated to the environment, respond exactly with 'INVALID'.`
+                  },
+                  {
+                    type: 'image_url',
+                    image_url: {
+                      url: base64Image
+                    }
+                  }
+                ]
+              }
+            ],
+            temperature: 0.1,
+            max_tokens: 10
+          },
+          {
+            headers: {
+              'Authorization': `Bearer ${import.meta.env.VITE_GROQ_API_KEY}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+
+        const aiResult = response.data.choices[0].message.content.trim();
+        
+        if (aiResult.includes('INVALID')) {
+          setAuditResult({ error: true, text: 'This photo doesn\'t seem to show an eco-friendly activity. Please try uploading a different photo related to sustainability!' });
+          showAlert('⚠️ Sustainability audit failed', 'warning');
+        } else {
+          // Find the category in our list
+          const matched = AUDIT_ACHIEVEMENTS.find(a => aiResult.toLowerCase().includes(a.name.toLowerCase())) || AUDIT_ACHIEVEMENTS[4];
+          setAuditResult(matched);
+          showAlert(`🏅 Achievement Unlocked: ${matched.badge}!`, 'success');
+        }
+      } catch (err) {
+        console.error('Audit Error:', err);
+        showAlert('❌ AI Analysis failed. Please try again.', 'error');
+        setAuditResult({ error: true, text: 'Something went wrong with the AI analysis. Please check your connection and try again.' });
+      } finally {
+        setAuditLoading(false);
+      }
+    };
+    reader.readAsDataURL(file);
+    // Reset input so same file can be selected again
+    e.target.value = '';
+  };
+
+  const closeAuditModal = () => {
+    setAuditPhoto(null);
+    setAuditResult(null);
+    setAuditLoading(false);
+  };
 
   const totalOffset = transactions.reduce((s,t) => s + (t.co2Offset||0), 0);
   const totalEth = transactions.reduce((s,t) => s + parseFloat(t.ethPaid||0), 0);
@@ -130,6 +229,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
+            {userType === 'company' && (
             <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-4 mb-7">
               <div className="bg-cc-card border border-cc-border rounded-2xl p-5.5 p-5">
                 <div className="w-11 h-11 rounded-xl flex items-center justify-center text-[1.2rem] mb-3 bg-cc-green/10 text-cc-green">🌿</div>
@@ -156,6 +256,7 @@ export default function DashboardPage() {
                 <div className="text-[0.75rem] mt-1 text-cc-muted2">vs global avg</div>
               </div>
             </div>
+            )}
 
             {userType === 'company' && (
               <>
@@ -284,11 +385,72 @@ export default function DashboardPage() {
                       You've consistently kept your daily transport emissions in check! <br/>
                       <span className="text-white font-bold">Keep going to unlock the exclusive "Planet Saver" limited edition badge.</span>
                     </p>
-                    <button className="py-2.5 px-8 rounded-full bg-white text-black font-bold text-[0.85rem] transition-all hover:scale-105 hover:bg-cc-green hover:text-white" onClick={() => navigateTo('calculator')}>
-                      Audit Today's Impact
+                    <input type="file" accept="image/*" ref={fileInputRef} onChange={handlePhotoUpload} className="hidden" />
+                    <button className="py-2.5 px-8 rounded-full bg-white text-black font-bold text-[0.85rem] transition-all hover:scale-105 hover:bg-cc-green hover:text-white" onClick={handleAuditClick}>
+                      <i className="fas fa-camera mr-2"></i> Audit Today's Impact
                     </button>
                   </div>
                 </div>
+
+                {/* Audit Photo Result Modal */}
+                {auditPhoto && (
+                  <div className="fixed inset-0 bg-black/75 z-[3000] flex items-center justify-center p-5 animate-fadeIn" onClick={closeAuditModal}>
+                    <div className="bg-cc-card border border-cc-border2 rounded-[22px] p-6 max-w-[480px] w-full animate-modalIn" onClick={e => e.stopPropagation()}>
+                      <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-[1.1rem] font-bold flex items-center gap-2"><span className="text-cc-green">📸</span> Impact Audit</h3>
+                        <button className="bg-transparent border-none text-cc-muted2 text-[1.2rem] cursor-pointer hover:text-white" onClick={closeAuditModal}>✕</button>
+                      </div>
+
+                      {/* Uploaded Photo */}
+                      <div className="rounded-xl overflow-hidden border border-cc-border mb-4 max-h-[250px]">
+                        <img src={auditPhoto} alt="Audit" className="w-full h-full object-cover max-h-[250px]" />
+                      </div>
+
+                      {/* Loading State */}
+                      {auditLoading && (
+                        <div className="text-center py-6">
+                          <div className="w-[48px] h-[48px] border-4 border-cc-border border-t-cc-green rounded-full animate-spin mx-auto mb-3"></div>
+                          <div className="text-[0.9rem] text-cc-muted2">🔍 Analyzing your eco-activity...</div>
+                        </div>
+                      )}
+
+                      {/* Result */}
+                      {auditResult && (
+                        <div className="animate-fadeIn">
+                          {auditResult.error ? (
+                            // Error / Rejection Case
+                            <div className="bg-cc-red/10 border border-cc-red/30 rounded-xl p-5 text-center mb-4">
+                              <div className="text-[3rem] mb-2">❌</div>
+                              <div className="text-[1.1rem] font-bold text-cc-red mb-2">Audit Failed</div>
+                              <div className="text-[0.85rem] text-cc-muted2 leading-[1.6] mb-4">{auditResult.text}</div>
+                              <button className="w-full py-2.5 rounded-xl bg-cc-card2 border border-cc-border text-white font-bold text-[0.85rem] cursor-pointer" onClick={() => { closeAuditModal(); handleAuditClick(); }}>
+                                <i className="fas fa-redo mr-2"></i> Try Another Photo
+                              </button>
+                            </div>
+                          ) : (
+                            // Success Case
+                            <>
+                              <div className="bg-cc-card2 border border-cc-border rounded-xl p-5 text-center mb-4">
+                                <div className="text-[3rem] mb-2">{auditResult.icon}</div>
+                                <div className="text-[0.75rem] uppercase tracking-widest font-bold mb-1" style={{ color: auditResult.color }}>Achievement Unlocked!</div>
+                                <div className="text-[1.3rem] font-extrabold mb-2" style={{ color: auditResult.color }}>{auditResult.badge}</div>
+                                <div className="text-[0.85rem] text-cc-muted2 leading-[1.6]">{auditResult.desc}</div>
+                              </div>
+                              <div className="flex gap-3">
+                                <button className="flex-1 py-2.5 rounded-xl bg-cc-green text-black font-bold text-[0.85rem] border-none cursor-pointer transition-all hover:bg-cc-emerald" onClick={closeAuditModal}>
+                                  🎉 Claim Badge
+                                </button>
+                                <button className="flex-1 py-2.5 rounded-xl bg-cc-card2 border border-cc-border text-cc-muted2 font-bold text-[0.85rem] cursor-pointer transition-all hover:text-white hover:border-cc-green" onClick={() => { closeAuditModal(); handleAuditClick(); }}>
+                                  📸 Upload Another
+                                </button>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>

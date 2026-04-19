@@ -74,7 +74,7 @@ export default function ContactUsPage() {
         <div className="bg-cc-card2 border border-cc-border2 rounded-xl p-5 text-center">
           <div className="text-[1.5rem] text-cc-blue mb-3"><i className="fas fa-envelope"></i></div>
           <div className="font-bold mb-1">Email Us</div>
-          <div className="text-[0.8rem] text-cc-muted2">hello@origincarbon.org</div>
+          <div className="text-[0.75rem] text-cc-muted2 break-all">support.carbonfootprinting@gmail.com</div>
         </div>
         <div className="bg-cc-card2 border border-cc-border2 rounded-xl p-5 text-center">
           <div className="text-[1.5rem] text-cc-green mb-3"><i className="fab fa-twitter"></i></div>
@@ -84,7 +84,7 @@ export default function ContactUsPage() {
         <div className="bg-cc-card2 border border-cc-border2 rounded-xl p-5 text-center">
           <div className="text-[1.5rem] text-cc-purple mb-3"><i className="fas fa-map-marker-alt"></i></div>
           <div className="font-bold mb-1">HQ</div>
-          <div className="text-[0.8rem] text-cc-muted2">123 Green Block, World</div>
+          <div className="text-[0.8rem] text-cc-muted2">110,Ground floor Ahmadabad,Gujrat</div>
         </div>
       </div>
     </div>

@@ -108,10 +108,14 @@ export function AppProvider({ children }) {
     try {
       showAlert('🦊 Connecting to MetaMask...', 'info');
       const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-      setAccount(accounts[0]);
-      const web3Provider = new ethers.providers.Web3Provider(window.ethereum);
+      
+      // Ethers v6 syntax: BrowsersProvider instead of providers.Web3Provider
+      const web3Provider = new ethers.BrowserProvider(window.ethereum);
+      const web3Signer = await web3Provider.getSigner();
+      
       setProvider(web3Provider);
-      setSigner(web3Provider.getSigner());
+      setSigner(web3Signer);
+      setAccount(accounts[0]); // Moved here to ensure provider is ready first
 
       showAlert('✅ Wallet connected: ' + shortAddr(accounts[0]), 'success');
 
@@ -138,7 +142,7 @@ export function AppProvider({ children }) {
       if(account && provider) {
         try {
           const bal = await provider.getBalance(account);
-          setEthBalance(ethers.utils.formatEther(bal));
+          setEthBalance(ethers.formatEther(bal));
         } catch(e) {
           console.warn("Could not fetch ETH balance", e);
         }
@@ -146,7 +150,8 @@ export function AppProvider({ children }) {
         try {
           const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
           const bal = await contract.balanceOf(account);
-          const balNumber = Number(ethers.utils.formatUnits(bal, bal.gt(1000000) ? 18 : 0));
+          // Ethers v6 uses native BigInt, .gt() replaced by > 
+          const balNumber = Number(ethers.formatUnits(bal, bal > 1000000n ? 18 : 0));
           setCo2Balance(Math.floor(balNumber));
         } catch(e) {
           console.warn("Could not fetch CO2 balance from contract", e.message);
@@ -160,8 +165,8 @@ export function AppProvider({ children }) {
           let txs = [];
           if (events && events.length > 0) {
             txs = events.map(e => {
-              let c = e.args.amount ? e.args.amount.toNumber() : 0;
-              let eth = e.args.ethPaid ? ethers.utils.formatEther(e.args.ethPaid) : "0";
+              let c = e.args.amount ? Number(e.args.amount) : 0;
+              let eth = e.args.ethPaid ? ethers.formatEther(e.args.ethPaid) : "0";
               return {
                 id: e.blockNumber,
                 date: "Web3",
