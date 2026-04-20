@@ -43,7 +43,9 @@ export default function CalculatorPage() {
 
     const payload = formRef.current.getPayload();
     const isIndividual = userType === 'individual';
-    const apiUrl = isIndividual ? 'http://localhost:5000/predict' : 'http://localhost:5001/predict';
+    const apiUrl = isIndividual 
+      ? (import.meta.env.VITE_ML_INDIVIDUAL_URL || 'http://localhost:5000/predict') 
+      : (import.meta.env.VITE_ML_COMPANY_URL || 'http://localhost:5001/predict');
 
     try {
       const response = await fetch(apiUrl, {

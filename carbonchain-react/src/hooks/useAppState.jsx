@@ -3,7 +3,7 @@ import { ethers, BrowserProvider, formatEther, formatUnits, Contract } from 'eth
 import axios from 'axios';
 import { CONTRACT_ADDRESS, CONTRACT_ABI } from '../constants/contract';
 
-const API_BASE_URL = 'http://localhost:8080/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
 
 const AppContext = createContext();
 
