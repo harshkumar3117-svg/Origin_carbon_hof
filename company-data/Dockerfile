@@ -14,4 +14,4 @@ COPY . .
 ENV PORT=5001
 EXPOSE 5001
 
-CMD ["gunicorn", "--bind", "0.0.0.0:5001", "server:app", "--timeout", "120"]
+CMD gunicorn --bind 0.0.0.0:$PORT server:app --timeout 120 --workers 1

@@ -26,6 +26,28 @@ services:
       - key: PORT
         value: 8080
 
+  # ─── Python ML Server — Individual Carbon Footprint ───────────────────────
+  - type: web
+    name: carbonchain-ml-individual
+    runtime: docker
+    dockerfilePath: ./individual_data/Dockerfile
+    dockerContext: ./individual_data
+    plan: free
+    envVars:
+      - key: PORT
+        value: 5000
+
+  # ─── Python ML Server — Company Carbon Footprint ─────────────────────────
+  - type: web
+    name: carbonchain-ml-company
+    runtime: docker
+    dockerfilePath: ./company-data/Dockerfile
+    dockerContext: ./company-data
+    plan: free
+    envVars:
+      - key: PORT
+        value: 5001
+
 # ─── MySQL Database ──────────────────────────────────────────────────────────
 databases:
   - name: carbonchain-db
