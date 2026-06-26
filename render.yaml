@@ -16,7 +16,7 @@ services:
       - key: JWT_SECRET
         generateValue: true
       - key: CORS_ALLOWED_ORIGINS
-        value: https://carbonchain-react.vercel.app
+        value: https://origin-carbon-hof1.onrender.com
       - key: PORT
         value: 8080
 
