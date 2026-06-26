@@ -8,17 +8,11 @@ services:
     plan: free
     envVars:
       - key: DB_URL
-        fromDatabase:
-          name: carbonchain-db
-          property: connectionString
+        value: jdbc:postgresql://dpg-d8vbmd0js32c738toibg-a.oregon-postgres.render.com:5432/origindata
       - key: DB_USERNAME
-        fromDatabase:
-          name: carbonchain-db
-          property: user
+        value: origindata_user
       - key: DB_PASSWORD
-        fromDatabase:
-          name: carbonchain-db
-          property: password
+        value: 1vSd1CwiIJeOCDaKNCgt3XgHLhl8PJ04
       - key: JWT_SECRET
         generateValue: true
       - key: CORS_ALLOWED_ORIGINS
@@ -47,9 +41,3 @@ services:
     envVars:
       - key: PORT
         value: 5001
-
-# ─── MySQL Database ──────────────────────────────────────────────────────────
-databases:
-  - name: carbonchain-db
-    plan: free
-    databaseName: mydb
