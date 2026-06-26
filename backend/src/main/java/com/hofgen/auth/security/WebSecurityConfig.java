@@ -1,6 +1,7 @@
 package com.hofgen.auth.security;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -19,10 +20,14 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 @EnableMethodSecurity
 public class WebSecurityConfig {
+
+  @Value("${cors.allowedOrigins:http://localhost:5173,http://localhost:3000}")
+  private String allowedOriginsRaw;
   @Autowired
   UserDetailsServiceImpl userDetailsService;
 
@@ -81,7 +86,9 @@ public class WebSecurityConfig {
   public CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration config = new CorsConfiguration();
     config.setAllowCredentials(true);
-    config.setAllowedOriginPatterns(Arrays.asList("*")); // More permissive for debugging
+    // Read allowed origins from env variable (set on Render for production)
+    List<String> origins = Arrays.asList(allowedOriginsRaw.split(","));
+    config.setAllowedOrigins(origins);
     config.setAllowedHeaders(Arrays.asList("*"));
     config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
