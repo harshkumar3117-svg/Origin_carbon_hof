@@ -87,10 +87,15 @@ public class WebSecurityConfig {
     CorsConfiguration config = new CorsConfiguration();
     config.setAllowCredentials(true);
     // Read allowed origins from env variable (set on Render for production)
-    List<String> origins = Arrays.asList(allowedOriginsRaw.split(","));
+    // trim() removes any spaces that may exist after commas
+    List<String> origins = Arrays.stream(allowedOriginsRaw.split(","))
+        .map(String::trim)
+        .collect(java.util.stream.Collectors.toList());
     config.setAllowedOrigins(origins);
     config.setAllowedHeaders(Arrays.asList("*"));
+    config.setExposedHeaders(Arrays.asList("Authorization"));
     config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+    config.setMaxAge(3600L);
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
     source.registerCorsConfiguration("/**", config);
     return source;
