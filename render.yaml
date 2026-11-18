@@ -1,5 +1,6 @@
+
 services:
-  # ─── Spring Boot Backend ───────────────────────────────────────────────────
+  # ─── Spring Boot Backend ─────────────────────────────────────────────
   - type: web
     name: carbonchain-backend
     runtime: docker
@@ -8,11 +9,11 @@ services:
     plan: free
     envVars:
       - key: DB_URL
-        value: jdbc:postgresql://dpg-d8vbmd0js32c738toibg-a.oregon-postgres.render.com:5432/origindata
+        sync: false
       - key: DB_USERNAME
-        value: origindata_user
+        sync: false
       - key: DB_PASSWORD
-        value: 1vSd1CwiIJeOCDaKNCgt3XgHLhl8PJ04
+        sync: false
       - key: JWT_SECRET
         generateValue: true
       - key: CORS_ALLOWED_ORIGINS
@@ -20,7 +21,7 @@ services:
       - key: PORT
         value: 8080
 
-  # ─── Python ML Server — Individual Carbon Footprint ───────────────────────
+  # ─── Python ML Server — Individual Carbon Footprint ──────────────────
   - type: web
     name: carbonchain-ml-individual
     runtime: docker
@@ -31,7 +32,7 @@ services:
       - key: PORT
         value: 5000
 
-  # ─── Python ML Server — Company Carbon Footprint ─────────────────────────
+  # ─── Python ML Server — Company Carbon Footprint ─────────────────────
   - type: web
     name: carbonchain-ml-company
     runtime: docker
